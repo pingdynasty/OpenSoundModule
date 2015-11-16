@@ -6,6 +6,7 @@
 #include "UdpServer.h"
 
 #define MAX_OSC_COMMANDS 8
+// #define UDP_SERIAL_DEBUG
 
 class OscServer : public UdpServer {
   typedef void OscCommand(OscServer &server, OscMessage& msg);
@@ -27,7 +28,7 @@ public:
   void loop(){
     int len = parsePacket();
     if(len > 0) {
-#ifdef SERIAL_DEBUG
+#ifdef UDP_SERIAL_DEBUG
       Serial.print("udp recv ");
       Serial.print(len);
       Serial.print('/');
@@ -35,7 +36,7 @@ public:
 #endif
       if(autoRemoteIPAddress){
 	remoteIPAddress = remoteIP();
-#ifdef SERIAL_DEBUG
+#ifdef UDP_SERIAL_DEBUG
 	Serial.print("Remote IP (auto): ");
 	Serial.println(remoteIPAddress);
 #endif
@@ -96,7 +97,7 @@ public:
       int len = OscMessage::getOscInt(buffer+16);
       buffer += 16; // discard #bundle and timestamp
       size -= 16;
-#ifdef SERIAL_DEBUG
+#ifdef UDP_SERIAL_DEBUG
       Serial.print("#bundle ");
       Serial.print(len);
       Serial.print('/');
@@ -107,7 +108,7 @@ public:
 	buffer += len+4;
 	size -= len+4;
 	len = size >= 12 ? OscMessage::getOscInt(buffer) : 0;
-#ifdef SERIAL_DEBUG
+#ifdef UDP_SERIAL_DEBUG
       Serial.print("next ");
       Serial.print(len);
       Serial.print('/');
@@ -120,7 +121,7 @@ public:
   }
 
   void processMessage(uint8_t* buffer, int size){
-#ifdef SERIAL_DEBUG
+#ifdef UDP_SERIAL_DEBUG
     Serial.print("osc message ");
     Serial.println(size);
 #endif

@@ -7,6 +7,7 @@ static const char OSM_INDEX[] = OSM_HTML_BEGIN		 \
   "<p><a href='/auth'>Add WiFi Credentials</a></p>"	 \
   "<p><a href='/settings'>Network Settings</a></p>"	 \
   "<p><a href='/address'>Address Mapping</a></p>"	 \
+  "<p><a href='/ranges'>Value Ranges</a></p>"		 \
   "<p><a href='/cvgate'>Control</a></p></ul>"		 \
   "<p><a href='/status'>Status</a></p></ul>"		 \
   "<p><a href='/about'>About</a></p>"			 \
@@ -43,6 +44,7 @@ static const char OSM_ABOUT[] = OSM_HTML_BEGIN				\
 static const char OSM_STYLE[] = 
   "html{height:100%;margin:auto;background-color:white}"		\
   "body{box-sizing:border-box;min-height:80%;padding:20px;background-color:#84AFF4;font-family:'Lucida Sans Unicode','Lucida Grande',sans-serif;font-weight:normal;color:white;margin:4px auto;max-width:380px;text-align:center;border:3px solid #6f8bb8;border-radius:5px}" \
+  "a{color:#f0f8ff}"							\
   "div,h1{margin:25px}"							\
   "input,button{margin:10px;height:30px}"				\
   "button,select{border-color:#6f8bb8;background-color:#5f7eb0;color:white;border-radius:5px;font-size:15px;font-weight:bold}" \
@@ -63,6 +65,8 @@ START_OF_HTTP_PAGE_DATABASE(osm_http_pages)
 	.url_content.dynamic_data = {process_status, 0 }, },
     { "/settings", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_settings, 0 }, },
+    { "/ranges", "text/html", WICED_DYNAMIC_URL_CONTENT, 
+	.url_content.dynamic_data = {process_ranges, 0 }, },
     { "/address", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_address, 0 }, },
     { "/auth", "text/html", WICED_DYNAMIC_URL_CONTENT, 
@@ -77,12 +81,16 @@ START_OF_HTTP_PAGE_DATABASE(osm_http_pages)
 	.url_content.dynamic_data = {process_save, 1 }, },
     { "/save_osc", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_save, 2 }, },
+    { "/save_range", "text/html", WICED_DYNAMIC_URL_CONTENT, 
+	.url_content.dynamic_data = {process_save, 3 }, },
     { "/reset0", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_reset, 0 }, },
     { "/reset1", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_reset, 1 }, },
     { "/reset2", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_reset, 2 }, },
+    { "/reset3", "text/html", WICED_DYNAMIC_URL_CONTENT, 
+	.url_content.dynamic_data = {process_reset, 3 }, },
     { "/reset99", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_reset, 99 }, },
     { "/logo.png", "image/png", WICED_STATIC_URL_CONTENT, 

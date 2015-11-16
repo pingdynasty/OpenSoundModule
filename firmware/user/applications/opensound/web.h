@@ -11,6 +11,7 @@ static const char OSM_BACK[] = OSM_HTML_BACK;
 extern const wiced_http_page_t osm_http_pages[];
 
 int32_t process_status(const char* url, wiced_http_response_stream_t* stream, void* arg, wiced_http_message_body_t* body);
+int32_t process_ranges(const char* url, wiced_http_response_stream_t* stream, void* arg, wiced_http_message_body_t* body);
 int32_t process_settings(const char* url, wiced_http_response_stream_t* stream, void* arg, wiced_http_message_body_t* body);
 int32_t process_address(const char* url, wiced_http_response_stream_t* stream, void* arg, wiced_http_message_body_t* body);
 int32_t process_auth(const char* url, wiced_http_response_stream_t* stream, void* arg, wiced_http_message_body_t* body);

@@ -6,8 +6,8 @@
 
 #define SPARK_NO_CLOUD
 
-// #define SERIAL_DEBUG
-// #define SERIAL_CONSOLE
+#define SERIAL_DEBUG
+#define SERIAL_CONSOLE
 #define SERVICE_MDNS
 
 #define OSC_MESSAGE_MAX_PREFIX_SIZE 16

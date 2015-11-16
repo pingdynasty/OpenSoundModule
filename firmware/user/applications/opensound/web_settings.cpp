@@ -61,8 +61,6 @@ int32_t process_status(const char* url, wiced_http_response_stream_t* s, void* a
     stream.print(mac[i], HEX);
   }
   */
-  stream << "<br><button onclick='location.href=\"/reset0\"'>Reset Network Settings</button>";
-  stream << "<br><button onclick='location.href=\"/reset1\"'>Reset Address Mappings</button>";
   stream << "<br><button onclick='location.href=\"/reset2\"'>Clear WiFi credentials</button>";
   stream << "<br><button onclick='location.href=\"/reset99\"'>Factory Reset</button>";
   if(connection.getCurrentNetwork() != NETWORK_LOCAL_WIFI)
@@ -114,6 +112,50 @@ int32_t process_settings(const char* u, wiced_http_response_stream_t* s, void* a
   }
   if(networkSettings.hasChanged())
     stream << "<br><button onclick='location.href=\"/save_net\"'>Store Settings</button>";
+  stream << "<br><button onclick='location.href=\"/reset0\"'>Reset Settings</button>";
+  stream << OSM_BACK << OSM_END;
+  return 0;
+}
+
+int32_t process_ranges(const char* u, wiced_http_response_stream_t* s, void* arg, wiced_http_message_body_t* body){
+  UrlScanner url(u);
+  const char mins[] = "0123";
+  const char maxs[] = "4567";
+  bool updated = false;
+  for(int i=0; i<4; ++i){
+    char* param = url.getParameter(&mins[i], 1);
+    if(param != NULL){
+      debug << "setting input min [" << i << "] to value [" << param << "]\r\n";
+      rangeSettings.min[i] = atof(param);
+      updated = true;
+    } 
+    param = url.getParameter(&maxs[i], 1);
+    if(param != NULL){
+      debug << "setting input max [" << i << "] to value [" << param << "]\r\n";
+      rangeSettings.max[i] = atof(param);
+      updated = true;
+    }
+  }
+  Streamer stream(s);
+  stream << OSM_BEGIN << "<h1>Value Ranges</h1><form action='/ranges' method='GET'>";
+  stream << "<h2>Input</h2>"
+	 << "<p>CV A Min</p><input type='text' name='0' value='" << rangeSettings.min[CV_A_IN] << "'><br>"
+	 << "<p>CV A Max</p><input type='text' name='4' value='" << rangeSettings.max[CV_A_IN] << "'><br>"
+	 << "<p>CV B Min</p><input type='text' name='1' value='" << rangeSettings.min[CV_B_IN] << "'><br>"
+	 << "<p>CV B Max</p><input type='text' name='5' value='" << rangeSettings.max[CV_B_IN] << "'><br>"
+	 << "<h2>Output</h2>"
+	 << "<p>CV A Min</p><input type='text' name='2' value='" << rangeSettings.min[CV_A_OUT] << "'><br>"
+	 << "<p>CV A Max</p><input type='text' name='6' value='" << rangeSettings.max[CV_A_OUT] << "'><br>"
+	 << "<p>CV B Min</p><input type='text' name='3' value='" << rangeSettings.min[CV_B_OUT] << "'><br>"
+	 << "<p>CV B Max</p><input type='text' name='7' value='" << rangeSettings.max[CV_B_OUT] << "'><br>"
+	 << "<button type='submit'>Update</button></form>";
+  if(updated){
+    stream << "<h3>Settings updated</h3>";
+    reload();
+  }
+  if(rangeSettings.hasChanged())
+    stream << "<br><button onclick='location.href=\"/save_range\"'>Store Settings</button>";
+  stream << "<br><button onclick='location.href=\"/reset3\"'>Reset Settings</button>";
   stream << OSM_BACK << OSM_END;
   return 0;
 }
@@ -158,6 +200,7 @@ int32_t process_address(const char* u, wiced_http_response_stream_t* s, void* ar
   }
   if(addressSettings.hasChanged())
     stream << "<br><button onclick='location.href=\"/save_osc\"'>Store Settings</button>";
+  stream << "<br><button onclick='location.href=\"/reset1\"'>Reset Settings</button>";
   stream << OSM_BACK << OSM_END;
   return 0;
 }
@@ -246,12 +289,16 @@ int32_t process_reconnect(const char* url, wiced_http_response_stream_t* s, void
 }
 
 int32_t process_save(const char* url, wiced_http_response_stream_t* s, void* arg, wiced_http_message_body_t* body){
-  if((int)arg == 1){
+  switch((int)arg){
+  case 1:
     networkSettings.saveToFlash();
-    //    EEPROM.put(NETWORK_SETTINGS_ADDRESS, networkSettings);
-  }else if((int)arg == 2){
-    //    EEPROM.put(ADDRESS_SETTINGS_ADDRESS, addressSettings);
+    break;
+  case 2:
     addressSettings.saveToFlash();
+    break;
+  case 3:
+    rangeSettings.saveToFlash();
+    break;
   }
   Streamer stream(s);
   stream << OSM_BEGIN;
@@ -270,19 +317,24 @@ int32_t process_reset(const char* u, wiced_http_response_stream_t* s, void* arg,
     switch(idx){
     case 0:
       networkSettings.reset();
-      networkSettings.clearFlash();
+      //      networkSettings.clearFlash();
       stream << "<p>Network settings reset to factory defaults</p>";
       reload();
       break;
     case 1:
       addressSettings.reset();
-      addressSettings.clearFlash();
+      //      addressSettings.clearFlash();
       stream << "<p>OSC address mappings reset to factory defaults</p>";
       reload();
       break;
     case 2:
       connection.clearCredentials();
       stream << "<p>WiFi credentials purged</p>";
+      break;
+    case 3:
+      rangeSettings.reset();
+      //      rangeSettings.clearFlash();
+      stream << "<p>Value ranges reset to factory defaults</p>";
       break;
     case 99:
       factoryReset();

@@ -6,6 +6,9 @@
 OscServer oscserver;
 OscSender oscsender;
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 void sendOscStatus(const char* status){
   debugMessage("sending osc status");
   debugMessage(status);
@@ -32,7 +35,7 @@ void oscStatus(OscServer& server, OscMessage& msg){
   broadcastStatus();
 }
 
-float getFloatValue(OscMessage msg, index i){
+float getFloatValue(OscMessage msg, int i){
   float f;
   switch(msg.getDataType(i)){
   case 'f':
@@ -57,7 +60,7 @@ float getFloatValue(OscMessage msg, index i){
   return f;
 }
 
-bool getBoolValue(OscMessage msg, index i){
+bool getBoolValue(OscMessage msg, int i){
   bool b;
   switch(msg.getDataType(i)){
   case 'f':
@@ -87,19 +90,19 @@ void oscLed(OscServer& server, OscMessage& msg){
   if(msg.getSize() == 0)
     toggleLed();
   else
-    setLed(getBoolValue(0, msg) ? LED_GREEN : LED_YELLOW);
+    setLed(getBoolValue(msg, 0) ? LED_GREEN : LED_YELLOW);
 }
 
 uint16_t scaleInputValue(int def, float value){
-  value = (value - min[def])/(max[def] - min[def]);
+  value = (value - rangeSettings.min[def])/(rangeSettings.max[def] - rangeSettings.min[def]);
   return MIN(MAX(int(4095.0f*value), 0), 4095);
 }
 
 float scaleOutputValue(int def, uint16_t value){
   float out = value/4095.0f;
-  out = out*(max[def] - min[def]) + min[def];
+  out = out*(rangeSettings.max[def] - rangeSettings.min[def]) + rangeSettings.min[def];
   return out;
-//  return MIN(MAX(out, min[def]), max[def]);
+//  return MIN(MAX(out, rangeSettings.min[def]), rangeSettings.max[def]);
 }
 
 void oscCv(OscServer& server, OscMessage& msg){
@@ -119,7 +122,7 @@ void oscCvA(OscServer& server, OscMessage& msg){
 void oscCvB(OscServer& server, OscMessage& msg){
   float value = getFloatValue(msg, 0);
   debug << "osc cv b: " << value << "\r\n";
-  setCVA(scaleInputValue(CV_B_IN, value));
+  setCVB(scaleInputValue(CV_B_IN, value));
 }
 
 void oscTriggerA(OscServer& server, OscMessage& msg){
@@ -127,7 +130,7 @@ void oscTriggerA(OscServer& server, OscMessage& msg){
   if(msg.getSize() == 0)
     toggleTriggerA();
   else
-    setTriggerA(getBoolValue(0, msg));
+    setTriggerA(getBoolValue(msg, 0));
 }
 
 void oscTriggerB(OscServer& server, OscMessage& msg){
@@ -135,15 +138,15 @@ void oscTriggerB(OscServer& server, OscMessage& msg){
   if(msg.getSize() == 0)
     toggleTriggerB();
   else
-    setTriggerB(getBoolValue(0, msg));
+    setTriggerB(getBoolValue(msg, 0));
 }
 
 void sendCvA(uint16_t value){
-  oscsender.send(OscSender::CV_A, scaleOutputValue(CV_A_OUT, value);
+  oscsender.send(OscSender::CV_A, scaleOutputValue(CV_A_OUT, value));
 }
 
 void sendCvB(uint16_t value){
-  oscsender.send(OscSender::CV_B, scaleOutputValue(CV_B_OUT, value);
+  oscsender.send(OscSender::CV_B, scaleOutputValue(CV_B_OUT, value));
 }
 
 void sendTriggerA(bool value){
