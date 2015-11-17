@@ -259,8 +259,6 @@ bool isButtonPressed(){
 }
 
 void setup(){
-  WiFi.on();
-
   setLed(LED_GREEN);
   pinMode(ANALOG_PIN_A, INPUT);
   pinMode(ANALOG_PIN_B, INPUT);
@@ -271,6 +269,9 @@ void setup(){
   pinMode(YELLOW_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  setTriggerA(0);
+  setTriggerB(0);
+  WiFi.on();
 
 #ifdef SERIAL_DEBUG
   Serial.begin(SERIAL_BAUD_RATE);
@@ -322,7 +323,7 @@ void setup(){
 void process();
 void processButton();
 #ifdef SERIAL_CONSOLE
-void processSerial();
+void processConsole(Stream& port);
 #endif
 
 void loop(){
@@ -334,7 +335,7 @@ void loop(){
     process();
   }
 #ifdef SERIAL_CONSOLE
-  processSerial();
+  processConsole(Serial);
 #endif
   processButton();
 }
@@ -418,7 +419,6 @@ void factoryReset(){
     rangeSettings.clearFlash();
   if(connection.hasCredentials())
     connection.clearCredentials();
-
   connection.setAccessPointPrefix(OSM_AP_HOSTNAME);
   
   //  connection.setHostname(OSM_AP_HOSTNAME);

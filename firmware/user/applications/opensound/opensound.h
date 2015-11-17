@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define SERIAL_DEBUG
+// #define SERIAL_DEBUG
 #define SERIAL_CONSOLE
 #define SERVICE_MDNS
 
@@ -12,7 +12,7 @@
 #define OSC_MESSAGE_MAX_DATA_SIZE   38
 #define ANALOG_THRESHOLD            31
 
-#define OSM_AP_HOSTNAME             "OpenSoundModule"
+#define OSM_AP_HOSTNAME             "OpenSound"
 #define OSM_AP_AUTH                 "3"
 
 #define ASSERT(cond, msg) if(!(cond)){assert_failed(msg, __PRETTY_FUNCTION__, __LINE__);}
@@ -46,7 +46,7 @@ enum LedPin {
 };
 
 void setLed(LedPin led);
-void toggleLed();
+void printInfo(Print& out);
 
 class Debug : public Print {
   size_t write(uint8_t data){
@@ -75,7 +75,7 @@ extern "C" {
   void stopServers();
   void reload();
   void setRemoteIpAddress(const char* ip);
-
+  void toggleLed();
   uint16_t getCVA();
   uint16_t getCVB();
   void setCVA(uint16_t cv);
@@ -86,8 +86,8 @@ extern "C" {
   void toggleTriggerB();
   void factoryReset();
   const char* getDeviceName();
-  void setDeviceName(const char* );
-
+  void setDeviceName(const char* name);
+  void broadcastStatus();
   void debugMessage(const char* msg);
   void assert_failed(const char* msg, const char* location, int line);
 #ifdef  __cplusplus

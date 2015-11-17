@@ -1,6 +1,6 @@
 #!/bin/bash
 export INCLUDE_DIRS=`cat modules/paths|tr '\n' ' '`
-export MODULAR_FIRMWARE=n 
+export MODULAR_FIRMWARE=n
 export MODULAR=n
 # export USE_SWD=y
 # export DEBUG_BUILD=y

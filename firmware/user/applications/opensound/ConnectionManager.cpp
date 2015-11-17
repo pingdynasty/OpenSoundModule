@@ -408,7 +408,7 @@ const char* ConnectionManager::getAccessPointSSID(){
 
 void random_code(uint8_t* dest, unsigned len);
 
-bool ConnectionManager::generateAccessPointCredentials(){
+bool ConnectionManager::generateAccessPointCredentials(Print& out){
   wiced_config_soft_ap_t ap;
   memset(&ap, 0, sizeof(ap));
   // write prefix
@@ -420,13 +420,15 @@ bool ConnectionManager::generateAccessPointCredentials(){
   uint8_t* suffix = ap.SSID.value + ap.SSID.length;
   random_code(suffix, 4);
   ap.SSID.length += 4;
-  debug << "Generated SSID: [" << (char*)ap.SSID.value << "]\r\n";
+  out.print("Generated SSID: ");
+  out.println((char*)ap.SSID.value);
   // write suffix
   dct_write_app_data(suffix, DCT_DEVICE_ID_OFFSET, 4);
   // generate password
   char passwd[9] = {0};
   random_code((uint8_t*)passwd, 8);
-  debug << "Generated pass: [" << passwd << "]\r\n";
+  out.print("Generated pass: ");
+  out.println(passwd);
   return setAccessPointCredentials((char*)ap.SSID.value, passwd, OSM_AP_AUTH);
 }
 

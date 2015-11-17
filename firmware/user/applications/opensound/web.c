@@ -71,8 +71,10 @@ START_OF_HTTP_PAGE_DATABASE(osm_http_pages)
 	.url_content.dynamic_data = {process_address, 0 }, },
     { "/auth", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_auth, 0 }, },
+#if 0
     { "/scan", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_scan, 0 }, },
+#endif
     { "/reconnect_ap", "text/html", WICED_DYNAMIC_URL_CONTENT, 
 	.url_content.dynamic_data = {process_reconnect, 1 }, },
     { "/reconnect_sta", "text/html", WICED_DYNAMIC_URL_CONTENT, 

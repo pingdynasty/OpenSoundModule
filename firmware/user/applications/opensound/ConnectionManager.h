@@ -73,7 +73,7 @@ public:
   bool stop(ServiceType type);
   const char* getHostname();
   void setHostname(const char* name);
-  bool generateAccessPointCredentials();
+  bool generateAccessPointCredentials(Print& out);
 private:  
   unsigned long lastEvent;
   OpenSoundMode mode;

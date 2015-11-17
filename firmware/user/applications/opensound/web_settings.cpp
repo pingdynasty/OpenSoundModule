@@ -205,43 +205,6 @@ int32_t process_address(const char* u, wiced_http_response_stream_t* s, void* ar
   return 0;
 }
 
-#include "Scanner.hpp"
-class HtmlScanner : public Scanner {
-private:
-  Print& out;
-public:
-  HtmlScanner(Print& o): out(o){}
-  void scan(char* ssid, int sec, int channel, int dBm, uint32_t maxRate){
-    debugMessage("scan");
-    debugMessage(ssid);
-    out << "<input type='radio' name='ssid' value='"<< ssid << "'>" 
-	<< ssid << ' ' << dBm << "dBm " << getSecurityName(sec) << "<br>";	
-  }
-};
-
-int32_t process_scan(const char* url, wiced_http_response_stream_t* s, void* arg, wiced_http_message_body_t* body){
-  Streamer stream(s);
-  HtmlScanner scanner(stream);
-  stream << "<h1>Scan Networks</h1>"
-    //	 << "<form action='auth' method='POST'>"
-	 << "<ul>";
-  debugMessage("starting scan");
-  scanner.start();
-  debugMessage("scanning");
-  while(scanner.scanning()); // wait
-  debugMessage("scanning complete");
-  stream << "<p>Password</p><input name='password' type='password'><br>"
-	 << "<p>Authentication</p><select name='auth'>"
-	 << "<option value='0'>Open</option>"
-	 << "<option value='1'>WEP</option>"
-	 << "<option value='2'>WPA</option>"
-	 << "<option value='3' selected>WPA2</option>"
-	 << "</select><br>"
-	 << "<button type='submit'>Connect</button></form>"
-	 << OSM_BACK << OSM_END;
-  return 0;
-}
-
 int32_t process_auth(const char* url, wiced_http_response_stream_t* s, void* arg, wiced_http_message_body_t* body){
   //  debug << "msg body [" << body->message_data_length << "/" << body->total_message_data_remaining << "]\r\n";
   //  debug << "msg url [" << url << "]\r\n";
@@ -349,3 +312,40 @@ int32_t process_reset(const char* u, wiced_http_response_stream_t* s, void* arg,
   stream << OSM_BACK << OSM_END;
   return 0;
 }
+
+#if 0
+#include "Scanner.hpp"
+class HtmlScanner : public Scanner {
+public:
+  void scan(char* ssid, int sec, int channel, int dBm, uint32_t maxRate){
+    if(out != NULL){
+      (*out) << "<input type='radio' name='ssid' value='"<< ssid << "'>" 
+	     << ssid << ' ' << dBm << "dBm " << getSecurityName(sec) << "<br>";	
+    }
+  }
+};
+
+int32_t process_scan(const char* url, wiced_http_response_stream_t* s, void* arg, wiced_http_message_body_t* body){
+  Streamer stream(s);
+  HtmlScanner scanner;
+  stream << OSM_BEGIN << "<h1>Scan Networks</h1>"
+    	 << "<form action='auth' method='POST'>";
+  debugMessage("starting scan");
+  scanner.start(&stream);
+  debugMessage("scanning");
+  long now = millis();
+  while(scanner.scanning() && (millis() - now) < 6000); // wait max 6 seconds
+  scanner.done();
+  debugMessage("scanning complete");
+  stream << "<p>Password</p><input name='password' type='password'><br>"
+	 << "<p>Authentication</p><select name='auth'>"
+	 << "<option value='0'>Open</option>"
+	 << "<option value='1'>WEP</option>"
+	 << "<option value='2'>WPA</option>"
+	 << "<option value='3' selected>WPA2</option>"
+	 << "</select><br>"
+	 << "<button type='submit'>Connect</button></form>"
+	 << OSM_BACK << OSM_END;
+  return 0;
+}
+#endif
