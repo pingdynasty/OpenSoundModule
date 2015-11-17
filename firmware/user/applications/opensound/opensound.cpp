@@ -28,11 +28,6 @@ ConnectionManager connection;
 MDNS mdns;
 #endif
 
-#define OSM_AP_SSID                   "OpenSoundModule"
-#define OSM_AP_PASSWD                 "dadac0de"
-#define OSM_AP_AUTH                   "3"
-#define OSM_AP_HOSTNAME               "OpenSoundModule"
-
 void printInfo(Print& out){
   out.println("Device Status");
   if(connection.isWiFiConnected())
@@ -133,61 +128,6 @@ void setRemoteIpAddress(const char* address){
   Serial.print("Remote IP: ");
   Serial.println(oscserver.remoteIPAddress);
 #endif
-}
-
-void readCredentials(Stream& port){
-  port.setTimeout(10000);
-  port.println("Enter SSID:");
-  String ssid = port.readStringUntil('\r');
-  ssid.trim();
-  port.println("Enter AP security (0=Open, 1=WEP, 2=WPA, 3=WPA2):");
-  String auth = port.readStringUntil('\r');
-  auth.trim();
-  port.println("Enter password:");
-  String pass = port.readStringUntil('\r');
-  pass.trim();
-  port.print("SSID: [");
-  port.print(ssid);
-  port.print("] Auth: [");
-  port.print(auth);
-  port.print("] Password: [");
-  port.print(pass);
-  port.println("]");
-  port.println("Type yes to confirm");
-  String yes = port.readStringUntil('\r');
-  port.setTimeout(1000);
-  if(yes.equals("yes"))
-    connection.setCredentials(ssid.c_str(), pass.c_str(), auth.c_str());
-  else
-    port.println("Cancelled");
-}
-
-void readAccessPointCredentials(Stream& port){
-  port.setTimeout(10000);
-  port.println("Enter AP SSID:");
-  String ssid = port.readStringUntil('\r');
-  ssid.trim();
-  port.println("Enter AP security (0=Open, 1=WEP, 2=WPA, 3=WPA2):");
-  String auth = port.readStringUntil('\r');
-  auth.trim();
-  port.println("Enter AP password:");
-  String pass = port.readStringUntil('\r');
-  pass.trim();
-  port.print("SSID: [");
-  port.print(ssid);
-  port.print("] Auth: [");
-  port.print(auth);
-  port.print("] Password: [");
-  port.print(pass);
-  port.println("]");
-  port.println("Type yes to confirm");
-  String yes = port.readStringUntil('\r');
-  port.setTimeout(1000);
-  if(yes.equals("yes")){
-    connection.setAccessPointCredentials(ssid.c_str(), pass.c_str(), auth.c_str());
-    port.println("Done");
-  }else
-    port.println("Cancelled");
 }
 
 void startServers(){
@@ -363,29 +303,20 @@ void setup(){
   button = isButtonPressed();
   cvA = analogRead(ANALOG_PIN_A);
   cvB = analogRead(ANALOG_PIN_B);
-
+  
 #ifdef SERVICE_MDNS
-  debugMessage("mdns");
-#if 0
-    bool success = mdns.setHostname("core-1");
-    success &= mdns.setService("tcp", "http", 80, "Core 1");
-    success &= mdns.addTXTEntry("coreid", "1");
-#else
-  // mdns
-  bool success = mdns.setHostname("osm");
-  success &= mdns.setService("udp", "osc", 8000, OSM_AP_HOSTNAME);
-  //success &= mdns.setService("tcp", "http", 80, OSM_AP_HOSTNAME);
-  success &= mdns.addTXTEntry("coreid", "1");
-#endif
-  if(success)
-    debugMessage("mdns config succeeded");
-  else
-    debugMessage("mdns config failed");  
-  debugMessage("mdns done");
+  debugMessage("mdns setup");
+  const char* hostname = getDeviceName();
+  if(hostname == NULL)
+    hostname = OSM_AP_HOSTNAME;
+  uint16_t port = networkSettings.localPort;
+  mdns.setHostname("osm");
+  mdns.setService("udp", "osc", port, hostname);
+  // success &= mdns.addTXTEntry("port", "1");
 #endif /* SERVICE_MDNS */
-
   //  dacTimer.begin(dacCallback, 400, hmSec);
   // dacTimer.start();
+  debugMessage("setup complete");
 }
 
 void process();
@@ -456,163 +387,10 @@ void process(){
     triggerB = btn;
     sendTriggerB(btn);
   }
-  // websocketserver.loop();
+  //  websocketserver.loop();
   //  tcpsocketserver.loop();
   oscserver.loop();
 }
-
-#include "Scanner.hpp"
-Scanner scanner;
-
-#ifdef SERIAL_CONSOLE
-void processSerial(){
-  if(Serial.available() > 0){
-    int c = Serial.read();
-    switch(c){
-    case 'f':
-      debugMessage("f: factory reset");
-      factoryReset();
-      break;
-    case '?':
-      debugMessage("?: print info");
-      printInfo(Serial);
-      break;
-    case 's':
-      debugMessage("s: scan wifi");
-      scanner.start();
-      break;
-    case '!':
-      debugMessage("!: clear credentials");
-      connection.clearCredentials();
-      printInfo(Serial);
-      break;
-    case 'b':
-      debugMessage("b: broadcast mode");
-      oscserver.setBroadcastMode(true);
-      break;
-    case '+':
-      debugMessage("+: add credentials");
-      readCredentials(Serial);
-      break;
-    case '=':
-      debugMessage("=: set access point credentials");
-      readAccessPointCredentials(Serial);
-      break;
-    case 'l':
-      debugMessage("l: toggle led");
-      toggleLed();
-      break;
-    case '0':
-      debugMessage("0: internal antenna");
-      WiFi.selectAntenna(ANT_INTERNAL);
-      break;
-    case '1':
-      debugMessage("1: auto antenna");
-      WiFi.selectAntenna(ANT_AUTO);
-      break;
-    case '2':
-      debugMessage("2: external antenna");
-      WiFi.selectAntenna(ANT_EXTERNAL);
-      break;
-    case '<':
-      debugMessage("<: stop servers");
-      stopServers();
-      break;
-    case '>':
-      debugMessage(">: start servers");
-      startServers();
-      break;
-    case 'a':
-      debugMessage("a: access point connect");
-      connection.connect(NETWORK_ACCESS_POINT);
-      break;
-    case 'w':
-      debugMessage("w: wifi connect");
-      connection.connect(NETWORK_LOCAL_WIFI);
-      break;
-    case '*': {
-      debugMessage("*: print local IP address");
-      Serial.println(connection.getLocalIPAddress());
-      break;
-    }
-    case ':': {
-      debugMessage("System Admin");
-      while(Serial.available() < 1); // wait
-      c = Serial.read();
-      switch(c){      
-      case '+':
-	debugMessage("+: activate wlan");
-	wlan_activate();
-	break;
-      case '-':
-	debugMessage("-: deactivate wlan");
-	wlan_deactivate();
-	break;
-      case '0':
-	debugMessage("0: select STA");
-	wlan_select_interface(NETWORK_LOCAL_WIFI);
-	break;
-      case '1':
-	debugMessage("1: select AP");
-	wlan_select_interface(NETWORK_ACCESS_POINT);
-	break;
-      case 'i':
-	debugMessage("i: connect init");
-	wlan_connect_init();
-	break;
-      case 'f':
-	debugMessage("f: connect finalise");
-	wlan_connect_finalize();
-	break;
-      case 'd':
-	debugMessage("d: disconnect");
-	wlan_disconnect_now();
-	break;
-      case '>':
-	debugMessage(">: start DNS");
-	WiFi.startDNS();
-	break;
-      case '<':
-	debugMessage("<: stop DNS");
-	WiFi.stopDNS();
-	break;
-      case 'o':
-	debugMessage("o: WiFi.on");
-	WiFi.on();
-	break;
-      case 'w':
-	debugMessage("w: WiFi.connect");
-	WiFi.connect();
-	break;
-      case 'x':
-	debugMessage("x: WiFi.disconnect");
-	WiFi.disconnect();
-	break;
-      }
-      break;
-    }
-    case '[':
-      debugMessage("[: dac 0");
-      setCVA(0);
-      setCVB(0);
-      dac_set_ab(0, 0);
-      break;
-    case '|':
-      debugMessage("|: dac 1/2");
-      setCVA(2047);
-      setCVB(2047);
-      dac_set_ab(2047, 2047);
-      break;
-    case ']':
-      debugMessage("]: dac full");
-      setCVA(4095);
-      setCVB(4095);
-      dac_set_ab(4095, 4095);
-      break;
-    }
-  }
-}
-#endif /* SERIAL_CONSOLE */
 
 void reload(){
   oscserver.stop();
@@ -621,21 +399,42 @@ void reload(){
 }
 
 void factoryReset(){
+#ifdef SERIAL_DEBUG
+  if(networkSettings.settingsInFlash())
+    debugMessage("networkSettings in flash");
+  if(addressSettings.settingsInFlash())
+    debugMessage("addressSettings in flash");
+  if(rangeSettings.settingsInFlash())
+    debugMessage("rangeSettings in flash");
+#endif
   networkSettings.reset();
-  networkSettings.clearFlash();
+  if(networkSettings.settingsInFlash())
+    networkSettings.clearFlash();
   addressSettings.reset();
-  addressSettings.clearFlash();
-  connection.clearCredentials();
+  if(addressSettings.settingsInFlash())
+    addressSettings.clearFlash();
+  rangeSettings.reset();
+  if(rangeSettings.settingsInFlash())
+    rangeSettings.clearFlash();
+  if(connection.hasCredentials())
+    connection.clearCredentials();
+
+  connection.setAccessPointPrefix(OSM_AP_HOSTNAME);
+  
   //  connection.setHostname(OSM_AP_HOSTNAME);
+/*
   connection.setAccessPointPrefix(OSM_AP_HOSTNAME);
   connection.setAccessPointCredentials(OSM_AP_SSID, OSM_AP_PASSWD, OSM_AP_AUTH);
+*/
   connection.connect(NETWORK_ACCESS_POINT);
 }
 
 const char* getDeviceName(){
-  return connection.getAccessPointSSID();
+  return connection.getAccessPointPrefix();
 }
 
 void setDeviceName(const char* name){
   connection.setAccessPointPrefix(name);
 }
+
+#include "console.h"

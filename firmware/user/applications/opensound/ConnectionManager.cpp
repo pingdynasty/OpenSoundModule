@@ -392,6 +392,10 @@ void ConnectionManager::clearCredentials(){
   WiFi.clearCredentials();
 }
 
+bool ConnectionManager::hasCredentials(){
+  return WiFi.hasCredentials();
+}
+
 const char* ConnectionManager::getAccessPointSSID(){
   wiced_config_soft_ap_t* ap;
   wiced_dct_read_lock((void**)&ap, WICED_FALSE, DCT_WIFI_CONFIG_SECTION, OFFSETOF(platform_dct_wifi_config_t, soft_ap_settings), sizeof(wiced_config_soft_ap_t));
@@ -402,8 +406,32 @@ const char* ConnectionManager::getAccessPointSSID(){
   return (const char*)wlan_config.uaSSID;
 }
 
+void random_code(uint8_t* dest, unsigned len);
+
+bool ConnectionManager::generateAccessPointCredentials(){
+  wiced_config_soft_ap_t ap;
+  memset(&ap, 0, sizeof(ap));
+  // write prefix
+  strcpy((char*)ap.SSID.value, "OpenSound");
+  ap.SSID.length = 9;
+  dct_write_app_data(&ap.SSID, DCT_SSID_PREFIX_OFFSET, ap.SSID.length+1);
+  // generate suffix
+  ap.SSID.value[ap.SSID.length++] = '-';
+  uint8_t* suffix = ap.SSID.value + ap.SSID.length;
+  random_code(suffix, 4);
+  ap.SSID.length += 4;
+  debug << "Generated SSID: [" << (char*)ap.SSID.value << "]\r\n";
+  // write suffix
+  dct_write_app_data(suffix, DCT_DEVICE_ID_OFFSET, 4);
+  // generate password
+  char passwd[9] = {0};
+  random_code((uint8_t*)passwd, 8);
+  debug << "Generated pass: [" << passwd << "]\r\n";
+  return setAccessPointCredentials((char*)ap.SSID.value, passwd, OSM_AP_AUTH);
+}
+
 bool ConnectionManager::setAccessPointCredentials(const char* ssid, const char* passwd, const char* auth){
-  //void setAccessPoint(char* prefix, char* auth){
+  debug << "setting ap [" << ssid << "][" << passwd << "][" << auth << "]\r\n";
   wiced_config_soft_ap_t ap;
   ap.SSID.length = strnlen(ssid, MAX_SSID_PREFIX_LEN);
   strncpy((char*)ap.SSID.value, ssid, ap.SSID.length);
@@ -441,6 +469,18 @@ void ConnectionManager::setAccessPointPrefix(const char* prefix){
   ssid.length = strnlen(prefix, MAX_SSID_PREFIX_LEN);
   strncpy((char*)ssid.value, prefix, ssid.length);
   dct_write_app_data(&ssid, DCT_SSID_PREFIX_OFFSET, ssid.length+1);
+}
+
+String ConnectionManager::getAccessPointPrefix(){
+  const uint8_t* prefix = (const uint8_t*)dct_read_app_data(DCT_SSID_PREFIX_OFFSET);
+  uint8_t len = *prefix;
+  if(!len || len>MAX_SSID_PREFIX_LEN)
+    return NULL;
+  char tmp[len+1] = {0};
+  memcpy(tmp, &prefix[1], len);
+  String ret = tmp;
+  //   return (char*)&prefix[1]; // not null terminated
+  return ret;
 }
 
 /*

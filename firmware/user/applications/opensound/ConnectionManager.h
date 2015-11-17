@@ -9,6 +9,7 @@
 
 class IPAddress;
 class Print;
+class String;
 
 class ConnectionManager {
   enum OpenSoundMode {
@@ -62,14 +63,17 @@ public:
   int getRSSI();
   bool setCredentials(const char* ssid, const char* password, const char* auth);
   void clearCredentials();
+  bool hasCredentials();
   bool setAccessPointCredentials(const char* ssid, const char* passwd, const char* auth);
   void setAccessPointPrefix(const char* prefix);
+  String getAccessPointPrefix();
   const char* getAccessPointSSID();
   void updateLed();
   bool start(ServiceType type);
   bool stop(ServiceType type);
   const char* getHostname();
   void setHostname(const char* name);
+  bool generateAccessPointCredentials();
 private:  
   unsigned long lastEvent;
   OpenSoundMode mode;

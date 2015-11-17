@@ -37,7 +37,7 @@ public:
     EEPROM.put(address, *this);
   }
   void clearFlash(){
-    EEPROM.write(address, 0);
+    EEPROM.write(address, 0xff);
   }
 };
 

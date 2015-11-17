@@ -4,13 +4,10 @@
 
 bool MDNS::setHostname(String hostname) {
     bool success = hostname.length() < MAX_LABEL_SIZE && isAlphaDigitHyphen(hostname);
-
     if (success) {
         labels[HOST_NAME] = new Label(hostname, LOCAL);
-
         success = labels[HOST_NAME]->getSize() == hostname.length();
     }
-
     return success;
 }
 
