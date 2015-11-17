@@ -12,6 +12,7 @@
 #define OSC_MESSAGE_MAX_DATA_SIZE   38
 #define ANALOG_THRESHOLD            31
 
+#define FIRMWARE_VERSION            "v0.8"
 #define OSM_AP_HOSTNAME             "OpenSound"
 #define OSM_AP_AUTH                 "3"
 

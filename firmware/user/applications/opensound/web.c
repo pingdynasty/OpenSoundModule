@@ -1,5 +1,6 @@
 #include "web.h"
 #include "minilogo.h"
+#include "opensound.h"
 
 static const char OSM_INDEX[] = OSM_HTML_BEGIN		 \
   "<h1>Open Sound Module</h1>"				 \
@@ -35,7 +36,7 @@ static const char OSM_ABOUT[] = OSM_HTML_BEGIN				\
   "<h1>About</h1>"							\
   "<h2>Open Sound Module</h2>"						\
   "<p>WiFi OSC to CV/Gate interface</p>"				\
-  "<p>Firmware v0.1</p>"						\
+  "<p>Firmware " FIRMWARE_VERSION "</p>"						\
   "<p>See our <a href='http://www.rebeltech.org/products/open-sound-module/'>website</a> for instructions and information.</p>"	\
   "<br><img src='logo.png'/><br>"					\
   OSM_HTML_BACK								\
