@@ -272,6 +272,7 @@ void setup(){
   setTriggerA(0);
   setTriggerB(0);
   WiFi.on();
+  randomSeed(micros());
 
 #ifdef SERIAL_DEBUG
   Serial.begin(SERIAL_BAUD_RATE);

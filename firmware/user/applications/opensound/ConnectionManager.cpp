@@ -426,7 +426,8 @@ bool ConnectionManager::generateAccessPointCredentials(Print& out){
   dct_write_app_data(suffix, DCT_DEVICE_ID_OFFSET, 4);
   // generate password
   char passwd[9] = {0};
-  random_code((uint8_t*)passwd, 8);
+  random_code((uint8_t*)passwd, 4);
+  random_code((uint8_t*)passwd+4, 4);
   out.print("Generated pass: ");
   out.println(passwd);
   return setAccessPointCredentials((char*)ap.SSID.value, passwd, OSM_AP_AUTH);
