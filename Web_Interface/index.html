@@ -1,0 +1,23 @@
+---
+layout: default
+---
+
+<div class="posts">
+  {% for post in site.posts %}
+    <article class="post">
+
+      <h1>Web Interface</h1>
+
+      <div class="entry">
+       <div>Along with the OSC server, the device also integrates a small web server. You can connect to it by entering the module’s IP address in a web browser on any device connected to the same network.</div>
+       <div>When in AP mode (green LED), enter this web address: <a href="http://192.168.0.1/">http://192.168.0.1/</a></div>
+       <div>In the web interface you can configure the network settings, address mappings and more.</div>
+
+<p><div>Note: Currently only Chrome is confirmed to be fully compatible with the OSM web features.</div></p>
+
+      </div>
+
+      
+    </article>
+  {% endfor %}
+</div>

@@ -1,0 +1,30 @@
+---
+layout: default
+---
+
+<div class="posts">
+    <article class="post">
+
+      <h1>Firmware Upgrade</h1>
+
+      <div class="entry">
+        	<div>To upgrade the firmware you need to have a firmware binary file, a micro USB cable, and a working installation of dfu-util.<div>
+	<div>dfu-util is a command line tool that is available for Linux, Mac OS X and Windows.<div>
+	<div>The device on the back of the OSM is called a Photon, and comprises of a Broadcom WiFi module and an ST microcontroller. A firmware upgrade involves reprogramming, or flashing, the Photon.<div>
+	<ol>
+	<li>Remove your OSM module from the case and disconnect the power cable.</li>
+	<li>Connect the micro USB cable to the Photon.</li>
+	<li>Open a terminal window in the directory in which you have unzipped the firmware file.</li>
+	<li>Hold down the small button to the right of the USB socket (Mode) and press the small button to the left (Reset).</li>
+	<li>Hold the Mode button while the LED between the buttons flashes purple, let go when it flashes yellow.</li>
+	<li>The Photon will now continue to flash yellow to indicate that it is in DFU mode. If it does not, go back to step 4.</li>
+	<li>Issue the following command to flash the firmware:
+	<em>dfu-util -d 2b04:d006 -a 0 -s 0x8020000:leave -D opensound.bin</em></li>
+	<li>The terminal window should show a progress bar and then say: File downloaded successfully. Any error displayed after this message can be ignored.</li>
+	<li>Press the Reset button and verify that the OSM connects as expected.</li>
+	<li>Disconnect the USB cable and install the OSM in your rack.</li>
+	</ol>
+
+      </div>
+    </article>
+</div>

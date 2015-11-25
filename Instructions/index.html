@@ -1,0 +1,52 @@
+---
+layout: default
+---
+
+<div class="posts">
+    <article class="post">
+
+      <h1>Instructions</h1>
+
+      <div class="entry">
+	<p><div>The OpenSoundModule has two channels: A and B. Each channel has a trigger input and output, and a CV (control voltage) input and output.</div>
+	<div>The module also has a bicolour LED pushbutton: the WiFi button.</div></p>
+	<h3>WiFi Button</h3>
+	<p><div>Pressing the WiFi button will broadcast an OSC status message. Any device on the network will be able to receive the status message on the configured port.</div></p>
+
+	<p><div>The WiFi button normally indicates the status of the WiFi connection:</div></p>
+	<ul>
+	<li><div>Green: AP Mode, configured as Access Point</div></li>
+	<li><div>Yellow: Client Mode, connected to a local WiFi network</div></li>
+	</ul>
+
+	<div>To change between local network and access point modes, hold the pushbutton down for approximately 6 seconds.</div>
+	<h3>Access Point Mode</h3>
+	<p><div>By default, the OSM will create a soft Access Point (AP) with the following network details
+	(password and SSID are printed on a label on the back of the module)</div></p>
+	<div>SSID: OpenSound-ABCD</div>
+	<div>Password: ********</div>
+	<div>Authentication: WPA2</div>
+	<div>Local IP: 192.168.0.1</div>
+	<div>Gateway IP: 192.168.0.1</div>
+
+	<p><div>If the OSM doesn’t have any WiFi credentials stored or the stored networks can’t be connected, it will fall back on Access Point mode. You can also switch from local WiFi to AP mode by pressing down the WiFi button for approximately 6 seconds.</div></p>
+
+	<div>In AP mode, the module is fully functional with OSC and web interfaces.</div>
+	<h3>Local WiFi Mode</h3>
+	<div>Once the OSM is configured with the right credentials it will be able to connect to a local WiFi network, as long as the network is within range.</div>
+	<div>While a local network connection is being established, the WiFi button will flash yellow slowly.
+	If the connection is lost or can’t be established the WiFi button flashes rapidly before trying again. After a certain number of attempts it will give up and revert to AP mode.</div>
+	<h3>Establishing the IP Address</h3>
+	<div>In local WiFi mode, the OSM will be allocated an IP address by a DHCP server, which is usually the network router. To find out what IP address has been assigned there are several methods.</div>
+	<ol>
+	<li><div>Listen to status messages</div></li>
+	<li><div>Service Discovery using mDNS / Bonjour</div></li>
+	</ol>
+
+	<p><div>When the WiFi button is pressed the OSM will broadcast a status message containing its IP address and input port. By listening to messages on the output port (default: 9000) you can find out the OSM IP address.</div></p>
+
+	<div>You can also configure your software using Zeroconf or mDNS / Bonjour. This is a service discovery protocol supported by many software makers. The OSM will reply to mDNS queries and advertise itself as an OSC service.</div>
+
+      </div>
+    </article>
+</div>

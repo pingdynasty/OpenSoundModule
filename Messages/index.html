@@ -1,0 +1,34 @@
+---
+layout: default
+---
+
+<div class="posts">
+    <article class="post">
+
+      <h1>OSC Messages</h1>
+
+      <div class="entry">
+        	<p><div>The module sends an OSC message when there is a change in the signal connected to an input jack.
+	When it receives a matching OSC message it changes the signal at the corresponding output jack.
+	Address mapping defaults are shown below, they can be changed in the web configuration.</div></p>
+	<h3>Triggers</h3>
+	<div>Default mappings: /osm/a/tr and /osm/b/tr</div>
+	<div>OSM sends trigger messages with one integer argument:</div>
+	<div>0 for off / low, 1 for on / high.</div>
+	<div>The module handles trigger input messages with either no argument, with an integer argument, or with a float argument.</div>
+	<div>No argument: toggle</div>
+	<div>Integer argument: 0 for off, 1 for on</div>
+	<div>Float argument: less than 0.5 for off, more than 0.5 for on</div>
+	<h3>CV</h3>
+	<div>Default mappings: /osm/a/cv and /osm/b/cv</div>
+	<div>OSM sends CV messages with one float argument:</div>
+	<div>0.0 to 1.0 for a unipolar input signal from 0 to 5v.</div>
+	<div>-1.0 to 1.0 for a bipolar input signal from -5 to 5v.</div>
+	<div>The module handles CV messages with either a float or an integer argument.</div>
+	<div>Float -1 to 1, or integer 0 to 4095 (12 bits) for an output signal from -5 to 5v.</div>
+	<h3>Status</h3>
+	<div>Default mapping: /osm/status</div>
+	<div>The message contains a string with the module’s current IP address and local (receiving) port number.</div>
+      </div>
+    </article>
+</div>
