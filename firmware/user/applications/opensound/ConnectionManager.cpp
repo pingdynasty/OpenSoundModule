@@ -412,23 +412,22 @@ bool ConnectionManager::generateAccessPointCredentials(Print& out){
   wiced_config_soft_ap_t ap;
   memset(&ap, 0, sizeof(ap));
   // write prefix
-  strcpy((char*)ap.SSID.value, "OpenSound");
-  ap.SSID.length = 9;
+  strcpy((char*)ap.SSID.value, OSM_AP_HOSTNAME);
+  ap.SSID.length = strlen(OSM_AP_HOSTNAME);
   dct_write_app_data(&ap.SSID, DCT_SSID_PREFIX_OFFSET, ap.SSID.length+1);
   // generate suffix
   ap.SSID.value[ap.SSID.length++] = '-';
   uint8_t* suffix = ap.SSID.value + ap.SSID.length;
   random_code(suffix, 4);
   ap.SSID.length += 4;
-  out.print("Generated SSID: ");
-  out.println((char*)ap.SSID.value);
   // write suffix
   dct_write_app_data(suffix, DCT_DEVICE_ID_OFFSET, 4);
   // generate password
   char passwd[9] = {0};
   random_code((uint8_t*)passwd, 4);
   random_code((uint8_t*)passwd+4, 4);
-  out.print("Generated pass: ");
+  out.println("Generated SSID and password: ");
+  out.println((char*)ap.SSID.value);
   out.println(passwd);
   return setAccessPointCredentials((char*)ap.SSID.value, passwd, OSM_AP_AUTH);
 }
@@ -457,11 +456,11 @@ bool ConnectionManager::setAccessPointCredentials(const char* ssid, const char* 
   default:
     return false;
   }
-  if(sec == 3 && ap.SSID.length < 8){
-    debugMessage("password too short for WPA2");
-    return false; // password too short for WPA2
-  }
   ap.security_key_length = strnlen(passwd, SECURITY_KEY_SIZE);
+  if(sec == 3 && ap.security_key_length < 8){
+    debugMessage("password too short for WPA2");
+    return false;
+  }
   strncpy(ap.security_key, passwd, ap.security_key_length);
   wiced_result_t result = wiced_dct_write(&ap, DCT_WIFI_CONFIG_SECTION, OFFSETOF(platform_dct_wifi_config_t, soft_ap_settings), sizeof(wiced_config_soft_ap_t));
   return result == WICED_SUCCESS;
