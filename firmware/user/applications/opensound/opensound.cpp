@@ -274,11 +274,9 @@ void setup(){
   WiFi.on();
   randomSeed(micros());
 
-#ifdef SERIAL_DEBUG
+#if defined SERIAL_DEBUG || defined SERIAL_CONSOLE
   Serial.begin(SERIAL_BAUD_RATE);
-  //  Serial1.begin(SERIAL_BAUD_RATE);
-  debugMessage("Serial.go");
-  //  Serial1.print("Serial1.go");
+  debugMessage("Serial.begin");
 #endif
 
   networkSettings.init();
