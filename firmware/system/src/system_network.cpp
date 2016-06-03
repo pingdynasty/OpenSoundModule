@@ -65,22 +65,22 @@ void HAL_WLAN_notify_simple_config_done()
     network.notify_listening_complete();
 }
 
-void HAL_WLAN_notify_connected()
+void HAL_NET_notify_connected()
 {
     network.notify_connected();
 }
 
-void HAL_WLAN_notify_disconnected()
+void HAL_NET_notify_disconnected()
 {
     network.notify_disconnected();
 }
 
-void HAL_WLAN_notify_can_shutdown()
+void HAL_NET_notify_can_shutdown()
 {
     network.notify_can_shutdown();
 }
 
-void HAL_WLAN_notify_dhcp(bool dhcp)
+void HAL_NET_notify_dhcp(bool dhcp)
 {
     network.notify_dhcp(dhcp);
 }
@@ -98,6 +98,7 @@ void network_connect(network_handle_t network, uint32_t flags, uint32_t param, v
 
 void network_disconnect(network_handle_t network, uint32_t param, void* reserved)
 {
+	nif(network).connect_cancel(true);
     SYSTEM_THREAD_CONTEXT_ASYNC_CALL(nif(network).disconnect());
 }
 

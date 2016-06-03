@@ -26,10 +26,18 @@
 test(api_spark_variable) {
 
     int valueInt = 0;
+    int32_t valueInt32 = 0;
+    uint32_t valueUint32 = 0;
     double valueDouble = 0;
-    const char* UNUSED(constValueString) = "oh no!";
+    const char* constValueString = "oh no!";
     char valueString[] = "oh yeah!";
+
     String valueSmartString(valueString);
+    bool boolValue = true;
+    uint8_t uint8Value = 1;
+
+    API_COMPILE(Particle.variable("mybool", boolValue));
+    API_COMPILE(Particle.variable("mybool", uint8Value));
 
     API_COMPILE(Particle.variable("myint", &valueInt, INT));
 
@@ -40,11 +48,40 @@ test(api_spark_variable) {
     //API_COMPILE(Particle.variable("mystring", &valueString, STRING));
 
     API_NO_COMPILE(Particle.variable("mystring", constValueString, STRING));
+
+    API_COMPILE(Particle.variable("mystring", &valueSmartString, STRING));
+
+    API_COMPILE(Particle.variable("mystring", &valueInt32, INT));
+    API_COMPILE(Particle.variable("mystring", &valueUint32, INT));
+
+    API_NO_COMPILE(Particle.variable("mystring", valueUint32));
+    API_COMPILE(Particle.variable("mystring", valueInt));
+    API_COMPILE(Particle.variable("mystring", valueInt32));
+    API_COMPILE(Particle.variable("mystring", valueUint32));
+
+    API_COMPILE(Particle.variable("mystring", valueDouble));
+
+    API_COMPILE(Particle.variable("mystring", valueString));
+    API_COMPILE(Particle.variable("mystring", constValueString));
+    API_COMPILE(Particle.variable("mystring", valueSmartString));
+    
+    // This should gives a compiler error about too long name
+    //API_COMPILE(Particle.variable("mystring123456789", valueString));
+
 }
 
 test(api_spark_function) {
     int (*handler)(String) = NULL;
+
     API_COMPILE(Particle.function("name", handler));
+
+    // This should gives a compiler error about too long name
+    //API_COMPILE(Particle.function("superlongfunctionname", handler));
+
+    // Length not checked until run time
+    API_COMPILE(Particle.function(String("name"), handler));
+    const char *longname = "superlongfunctionname";
+    API_COMPILE(Particle.function(longname, handler));
 
     class MyClass {
       public:
@@ -148,6 +185,10 @@ test(api_spark_connection) {
     API_COMPILE(Particle.connect());
     API_COMPILE(Particle.disconnect());
     API_COMPILE(Particle.process());
+
+#if HAL_PLATFORM_CLOUD_UDP
+    API_COMPILE(Particle.keepAlive(20 * 60));
+#endif
 }
 
 test(api_spark_deviceID) {

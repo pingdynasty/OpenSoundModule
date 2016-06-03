@@ -28,6 +28,7 @@
 #include "pinmap_impl.h"
 #include "stm32f10x.h"
 #include <stddef.h>
+#include "hw_ticks.h"
 
 /* Private typedef ----------------------------------------------------------*/
 
@@ -75,7 +76,7 @@ void HAL_Pin_Mode(pin_t pin, PinMode setMode)
   GPIO_TypeDef *gpio_port = PIN_MAP[pin].gpio_peripheral;
   pin_t gpio_pin = PIN_MAP[pin].gpio_pin;
 
-  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitTypeDef GPIO_InitStructure = {0};
 
   if (gpio_port == GPIOA )
   {
@@ -198,4 +199,46 @@ int32_t HAL_GPIO_Read(uint16_t pin)
   }
 
   return GPIO_ReadInputDataBit(PIN_MAP[pin].gpio_peripheral, PIN_MAP[pin].gpio_pin);
+}
+
+/*
+ * @brief   blocking call to measure a high or low pulse
+ * @returns uint32_t pulse width in microseconds up to 3 seconds,
+ *          returns 0 on 3 second timeout error, or invalid pin.
+ */
+uint32_t HAL_Pulse_In(pin_t pin, uint16_t value)
+{
+    #define pinReadFast(_pin) ((PIN_MAP[_pin].gpio_peripheral->IDR & PIN_MAP[_pin].gpio_pin) == 0 ? 0 : 1)
+
+    volatile uint32_t timeoutStart = SYSTEM_TICK_COUNTER; // total 3 seconds for entire function!
+
+    /* If already on the value we want to measure, wait for the next one.
+     * Time out after 3 seconds so we don't block the background tasks
+     */
+    while (pinReadFast(pin) == value) {
+        if (SYSTEM_TICK_COUNTER - timeoutStart > 216000000UL) {
+            return 0;
+        }
+    }
+
+    /* Wait until the start of the pulse.
+     * Time out after 3 seconds so we don't block the background tasks
+     */
+    while (pinReadFast(pin) != value) {
+        if (SYSTEM_TICK_COUNTER - timeoutStart > 216000000UL) {
+            return 0;
+        }
+    }
+
+    /* Wait until this value changes, this will be our elapsed pulse width.
+     * Time out after 3 seconds so we don't block the background tasks
+     */
+    volatile uint32_t pulseStart = SYSTEM_TICK_COUNTER;
+    while (pinReadFast(pin) == value) {
+        if (SYSTEM_TICK_COUNTER - timeoutStart > 216000000UL) {
+            return 0;
+        }
+    }
+
+    return (SYSTEM_TICK_COUNTER - pulseStart)/SYSTEM_US_TICKS;
 }

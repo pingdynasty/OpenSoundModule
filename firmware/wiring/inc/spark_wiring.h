@@ -39,7 +39,9 @@
 #include "spark_wiring_stream.h"
 #include "spark_wiring_printable.h"
 #include "spark_wiring_ipaddress.h"
+#include "spark_wiring_cellular_printable.h"
 #include "spark_wiring_wifi.h"
+#include "spark_wiring_cellular.h"
 #include "spark_wiring_character.h"
 #include "spark_wiring_random.h"
 #include "spark_wiring_system.h"
@@ -69,7 +71,6 @@ PinMode getPinMode(uint16_t pin);
 bool pinAvailable(uint16_t pin);
 void digitalWrite(uint16_t pin, uint8_t value);
 int32_t digitalRead(uint16_t pin);
-void analogWrite(uint16_t pin, uint16_t value);
 
 
 long map(long value, long fromStart, long fromEnd, long toStart, long toEnd);
@@ -79,10 +80,13 @@ uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder);
 
 void serialReadLine(Stream *serialObj, char *dst, int max_len, system_tick_t timeout);
 
-
+uint32_t pulseIn(pin_t pin, uint16_t value);
 
 #ifdef __cplusplus
 }
 #endif
+
+void analogWrite(uint16_t pin, uint16_t value);
+void analogWrite(uint16_t pin, uint16_t value, uint16_t pwm_frequency);
 
 #endif /* SPARK_WIRING_H_ */

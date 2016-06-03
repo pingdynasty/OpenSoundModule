@@ -28,8 +28,24 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 #include "semphr.h"
+#include "timers.h"
+#include "stm32f2xx.h"
+#include "interrupts_hal.h"
 #include <mutex>
 
+inline bool isISR()
+{
+	return (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0;
+}
+
+uint8_t HAL_IsISR()
+{
+	return isISR();
+}
+
+
+// For OpenOCD FreeRTOS support
+extern const int  __attribute__((used)) uxTopUsedPriority = configMAX_PRIORITIES;
 
 // use the newer name
 typedef xTaskHandle TaskHandle_t;
@@ -42,6 +58,13 @@ typedef unsigned portBASE_TYPE UBaseType_t;
 static_assert(sizeof(TaskHandle_t)==sizeof(__gthread_t), "__gthread_t should be the same size as TaskHandle_t");
 
 static_assert(sizeof(uint32_t)==sizeof(void*), "Requires uint32_t to be same size as void* for function cast to wiced_thread_function_t");
+
+#if defined(configENABLE_BACKWARD_COMPATIBILITY) && configENABLE_BACKWARD_COMPATIBILITY
+#define _CREATE_NAME_TYPE const char
+#else
+#define _CREATE_NAME_TYPE const signed char
+#endif
+
 
 /**
  * Creates a new thread.
@@ -59,12 +82,7 @@ os_result_t os_thread_create(os_thread_t* thread, const char* name, os_thread_pr
     if(priority >= configMAX_PRIORITIES) {
       priority = configMAX_PRIORITIES - 1;
     }
-#if defined(configENABLE_BACKWARD_COMPATIBILITY) && configENABLE_BACKWARD_COMPATIBILITY
-#define _CREATE_THREAD_NAME_TYPE const char
-#else
-#define _CREATE_THREAD_NAME_TYPE const signed char
-#endif
-    signed portBASE_TYPE result = xTaskCreate( (pdTASK_CODE)fun, (_CREATE_THREAD_NAME_TYPE* const) name, (stack_size/sizeof(portSTACK_TYPE)), thread_param, (unsigned portBASE_TYPE) priority, thread);
+    signed portBASE_TYPE result = xTaskCreate( (pdTASK_CODE)fun, (_CREATE_NAME_TYPE* const) name, (stack_size/sizeof(portSTACK_TYPE)), thread_param, (unsigned portBASE_TYPE) priority, thread);
     return ( result != (signed portBASE_TYPE) pdPASS );
 }
 
@@ -303,7 +321,10 @@ static_assert(portMAX_DELAY==CONCURRENT_WAIT_FOREVER, "expected portMAX_DELAY==C
 
 int os_queue_put(os_queue_t queue, const void* item, system_tick_t delay)
 {
-    return xQueueSend(queue, item, delay)!=pdTRUE;
+	if (isISR())
+		return xQueueSendFromISR(queue, item, nullptr)!=pdTRUE;
+	else
+		return xQueueSend(queue, item, delay)!=pdTRUE;
 }
 
 int os_queue_take(os_queue_t queue, void* item, system_tick_t delay)
@@ -376,9 +397,9 @@ int os_mutex_recursive_unlock(os_mutex_recursive_t mutex)
 void os_thread_scheduling(bool enabled, void* reserved)
 {
     if (enabled)
-        taskEXIT_CRITICAL();
+        xTaskResumeAll();
     else
-        taskENTER_CRITICAL();
+        vTaskSuspendAll();
 }
 
 int os_semaphore_create(os_semaphore_t* semaphore, unsigned max, unsigned initial)
@@ -403,3 +424,59 @@ int os_semaphore_give(os_semaphore_t semaphore, bool reserved)
     return xSemaphoreGive(semaphore)!=pdTRUE;
 }
 
+/**
+ * Create a new timer. Returns 0 on success.
+ */
+int os_timer_create(os_timer_t* timer, unsigned period, void (*callback)(os_timer_t timer), void* const timer_id, bool one_shot, void* reserved)
+{
+    *timer = xTimerCreate((_CREATE_NAME_TYPE*)"", period, !one_shot, timer_id, callback);
+    return *timer==NULL;
+}
+
+int os_timer_get_id(os_timer_t timer, void** timer_id)
+{
+    *timer_id = pvTimerGetTimerID(timer);
+    return 0;
+}
+
+int os_timer_change(os_timer_t timer, os_timer_change_t change, bool fromISR, unsigned period, unsigned block, void* reserved)
+{
+    portBASE_TYPE woken;
+    switch (change)
+    {
+    case OS_TIMER_CHANGE_START:
+        if (fromISR)
+            return xTimerStartFromISR(timer, &woken)!=pdPASS;
+        else
+            return xTimerStart(timer, block)!=pdPASS;
+
+    case OS_TIMER_CHANGE_RESET:
+        if (fromISR)
+            return xTimerResetFromISR(timer, &woken)!=pdPASS;
+        else
+            return xTimerReset(timer, block)!=pdPASS;
+
+    case OS_TIMER_CHANGE_STOP:
+        if (fromISR)
+            return xTimerStopFromISR(timer, &woken)!=pdPASS;
+        else
+            return xTimerStop(timer, block)!=pdPASS;
+
+    case OS_TIMER_CHANGE_PERIOD:
+        if (fromISR)
+            return xTimerChangePeriodFromISR(timer, period, &woken)!=pdPASS;
+        else
+            return xTimerChangePeriod(timer, period, block)!=pdPASS;
+    }
+    return -1;
+}
+
+int os_timer_destroy(os_timer_t timer, void* reserved)
+{
+    return xTimerDelete(timer, CONCURRENT_WAIT_FOREVER)!=pdPASS;
+}
+
+int os_timer_is_active(os_timer_t timer, void* reserved)
+{
+    return xTimerIsTimerActive(timer) != pdFALSE;
+}

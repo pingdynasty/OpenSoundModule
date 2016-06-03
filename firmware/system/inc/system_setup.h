@@ -28,6 +28,10 @@
 #include "spark_wiring_usbserial.h"
 #include "spark_wiring_platform.h"
 
+#if PLATFORM_ID>2
+#define SETUP_OVER_SERIAL1 1
+#endif
+
 #ifndef SETUP_OVER_SERIAL1
 #define SETUP_OVER_SERIAL1 0
 #endif
@@ -63,7 +67,18 @@ public:
     virtual void loop(void);
 protected:
     virtual void exit()=0;
+    /**
+     * Handle a character received over serial.
+     */
     virtual void handle(char c);
+
+    /**
+     * Handle a character peeked over serial.
+     * Returns true if the character was pulled from the stream and handled.
+     * Returns false if the character isn't recognized.
+     */
+    virtual bool handle_peek(char c);
+
     Config& config;
     void print(const char *s);
     void read_line(char *dst, int max_len);

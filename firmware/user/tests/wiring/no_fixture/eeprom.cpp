@@ -32,6 +32,15 @@ struct EEPROMCustomObject{
   char sValue[10];
 };
 
+test(EEPROM_Capacity) {
+#if (PLATFORM_ID == 0) // Core
+  uint16_t expectedCapacity = 128;
+#else // Photon/P1/Electron
+  uint16_t expectedCapacity = 2048;
+#endif
+  assertEqual(EEPROM.length(), expectedCapacity);
+}
+
 test(EEPROM_ReadWriteSucceedsForAllAddressWithInRange) {
     int EEPROM_SIZE = EEPROM.length();
     uint16_t address = 0;
@@ -46,8 +55,15 @@ test(EEPROM_ReadWriteSucceedsForAllAddressWithInRange) {
     // then
     for(address=0, data=data_seed; address < EEPROM_SIZE; address++, data++)
     {
-        assertEqual(EEPROM.read(address), data);
+        uint8_t data_read = EEPROM.read(address);
+        if (data_read!=data) {
+            assertEqual(EEPROM.read(address), data);
+        }
     }
+
+    // Avoid leaving the EEPROM 100% full which leads to poor performance
+    // in other programs using EEPROM on this device in the future
+    EEPROM.clear();
 }
 
 test(EEPROM_ReadWriteFailsForAnyAddressOutOfRange) {
@@ -74,6 +90,7 @@ test(EEPROM_PutGetSucceedsForCustomDataType) {
     // then
     EEPROMCustomObject getCustomData;
     EEPROM.get(0, getCustomData);
+    assertTrue(!memcmp(&putCustomData, &getCustomData, sizeof(EEPROMCustomObject)));
     assertEqual(putCustomData.fValue, getCustomData.fValue);
     assertEqual(putCustomData.bValue, getCustomData.bValue);
     assertEqual(strcmp(putCustomData.sValue, getCustomData.sValue), 0);

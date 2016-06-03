@@ -29,17 +29,18 @@
 
 int Internet_Test(void);
 
-int Spark_Connect(void);
-int Spark_Disconnect(void);
+int spark_cloud_socket_connect(void);
+int spark_cloud_socket_disconnect(void);
 
 void Spark_Protocol_Init(void);
-int Spark_Handshake(void);
+int Spark_Handshake(bool presence_announce);
 bool Spark_Communication_Loop(void);
 void Multicast_Presence_Announcement(void);
 void Spark_Signal(bool on, unsigned, void*);
 void Spark_SetTime(unsigned long dateTime);
 void Spark_Process_Events();
-
+void Spark_Sleep();
+void Spark_Wake();
 extern volatile uint8_t LED_Spark_Signal;
 void LED_Signaling_Override(void);
 
@@ -48,17 +49,23 @@ void system_set_time(time_t time, unsigned param, void* reserved);
 char* bytes2hexbuf(const uint8_t* buf, unsigned len, char* output);
 String bytes2hex(const uint8_t* buf, unsigned len);
 
-uint8_t cloudSocketClosed();
+uint8_t spark_cloud_socket_closed();
 
 bool spark_function_internal(const cloud_function_descriptor* desc, void* reserved);
 int call_raw_user_function(void* data, const char* param, void* reserved);
+
+String spark_deviceID();
 
 struct User_Var_Lookup_Table_t
 {
     const void *userVar;
     Spark_Data_TypeDef userVarType;
-    char userVarKey[USER_VAR_KEY_LENGTH];
+    char userVarKey[USER_VAR_KEY_LENGTH+1];
+
+    const void* (*update)(const char* name, Spark_Data_TypeDef varType, const void* var, void* reserved);
 };
+
+
 struct User_Func_Lookup_Table_t
 {
     void* pUserFuncData;
@@ -70,7 +77,7 @@ struct User_Func_Lookup_Table_t
 User_Var_Lookup_Table_t* find_var_by_key_or_add(const char* varKey);
 User_Func_Lookup_Table_t* find_func_by_key_or_add(const char* funcKey);
 
-extern SparkProtocol* sp;
+extern ProtocolFacade* sp;
 
 
 /**

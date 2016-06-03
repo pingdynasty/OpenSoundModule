@@ -96,7 +96,7 @@ __ALIGN_BEGIN const uint8_t* usbd_dfu_StringDesc[MAX_USED_MEDIA] __ALIGN_END  = 
 __ALIGN_BEGIN uint8_t  MAL_Buffer[XFERSIZE] __ALIGN_END ;
 
 /* Private function prototypes -----------------------------------------------*/
-static uint8_t  MAL_CheckAdd  (uint32_t Add);
+static uint8_t  MAL_CheckAdd  (uint32_t Idx, uint32_t Add);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -151,9 +151,14 @@ uint16_t MAL_DeInit(void)
   * @param  Add: Sector address/code
   * @retval Result of the opeartion: MAL_OK if all operations are OK else MAL_FAIL
   */
-uint16_t MAL_Erase(uint32_t Add)
+uint16_t MAL_Erase(uint32_t Idx, uint32_t Add)
 {
-  uint32_t memIdx = MAL_CheckAdd(Add);
+  uint32_t memIdx = Idx;
+  
+  if(MAL_OK != MAL_CheckAdd(Idx, Add))
+  {
+    return MAL_FAIL;
+  }
 
   /* Check if the area is protected */
   if (DFU_MAL_IS_PROTECTED_AREA(Add))
@@ -182,13 +187,21 @@ uint16_t MAL_Erase(uint32_t Add)
 /**
   * @brief  MAL_Write
   *         Write sectors of memory.
+  *         Write is tried twice in case of a first time failure.
+  *         After a successful write, data is verified.  If verification
+  *         fails this sequence is tried once more before failing.
   * @param  Add: Sector address/code
   * @param  Len: Number of data to be written (in bytes)
   * @retval Result of the opeartion: MAL_OK if all operations are OK else MAL_FAIL
   */
-uint16_t MAL_Write (uint32_t Add, uint32_t Len)
+uint16_t MAL_Write (uint32_t Idx, uint32_t Add, uint32_t Len)
 {
-  uint32_t memIdx = MAL_CheckAdd(Add);
+  uint32_t memIdx = Idx;
+  
+  if(MAL_OK != MAL_CheckAdd(Idx, Add))
+  {
+    return MAL_FAIL;
+  }
 
   /* Check if the area is protected */
   if (DFU_MAL_IS_PROTECTED_AREA(Add))
@@ -201,7 +214,29 @@ uint16_t MAL_Write (uint32_t Add, uint32_t Len)
     /* Check if the command is supported */
     if (tMALTab[memIdx]->pMAL_Write != NULL)
     {
-      return tMALTab[memIdx]->pMAL_Write(Add, Len);
+      int8_t tries_remaining = 2;
+      uint16_t status = MAL_FAIL;
+      do {
+        status = tMALTab[memIdx]->pMAL_Write(Add, Len);
+        if (status != MAL_OK) {
+          // Write failed, try once more.
+          status = tMALTab[memIdx]->pMAL_Write(Add, Len);
+          // If write failed twice, don't bother wasting time verifying and trying again.
+          if (status != MAL_OK) {
+            return MAL_FAIL;
+          }
+        }
+
+        // Write was successful, let's verify now.
+        status = tMALTab[memIdx]->pMAL_Verify(Add, Len);
+        if (status == MAL_OK) {
+          return MAL_OK;
+        }
+        // If verify failed, fall through and try write-verify one more time.
+
+      } while (tries_remaining-- > 0);
+
+      return MAL_FAIL;
     }
     else
     {
@@ -221,9 +256,14 @@ uint16_t MAL_Write (uint32_t Add, uint32_t Len)
   * @param  Len: Number of data to be written (in bytes)
   * @retval Buffer pointer
   */
-const uint8_t *MAL_Read (uint32_t Add, uint32_t Len)
+const uint8_t *MAL_Read (uint32_t Idx, uint32_t Add, uint32_t Len)
 {
-  uint32_t memIdx = MAL_CheckAdd(Add);
+  uint32_t memIdx = Idx;
+  
+  if(MAL_OK != MAL_CheckAdd(Idx, Add))
+  {
+    return MAL_Buffer;
+  }
 
   if (memIdx < MAX_USED_MEDIA)
   {
@@ -251,9 +291,14 @@ const uint8_t *MAL_Read (uint32_t Add, uint32_t Len)
   * @param  buffer: pointer to the buffer where the status data will be stored.
   * @retval Buffer pointer
   */
-uint16_t MAL_GetStatus(uint32_t Add , uint8_t Cmd, uint8_t *buffer)
+uint16_t MAL_GetStatus(uint32_t Idx, uint32_t Add , uint8_t Cmd, uint8_t *buffer)
 {
-  uint32_t memIdx = MAL_CheckAdd(Add);
+  uint32_t memIdx = Idx;
+  
+  if(MAL_OK != MAL_CheckAdd(Idx, Add))
+  {
+    return MAL_FAIL;
+  }
 
   if (memIdx < MAX_USED_MEDIA)
   {
@@ -280,21 +325,16 @@ uint16_t MAL_GetStatus(uint32_t Add , uint8_t Cmd, uint8_t *buffer)
   * @param  Add: Sector address/code (allow to determine which memory will be addressed)
   * @retval Index of the addressed memory.
   */
-static uint8_t  MAL_CheckAdd(uint32_t Add)
+static uint8_t  MAL_CheckAdd(uint32_t Idx, uint32_t Add)
 {
-  uint32_t memIdx = 0;
+  uint32_t memIdx = Idx;
 
-  /* Check with all supported memories */
-  for(memIdx = 0; memIdx < MAX_USED_MEDIA; memIdx++)
-  {
-    /* If the check addres is positive, exit with the memory index */
     if (tMALTab[memIdx]->pMAL_CheckAdd(Add) == MAL_OK)
     {
-      return memIdx;
-    }
+     return MAL_OK;
   }
-  /* If no memory found, return MAX_USED_MEDIA */
-  return (MAX_USED_MEDIA);
+  
+  return MAL_FAIL;
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

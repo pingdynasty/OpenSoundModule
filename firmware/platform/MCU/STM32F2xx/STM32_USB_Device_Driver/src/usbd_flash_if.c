@@ -40,6 +40,7 @@ uint16_t FLASH_If_Init(void);
 uint16_t FLASH_If_Erase (uint32_t Add);
 uint16_t FLASH_If_Write (uint32_t Add, uint32_t Len);
 const uint8_t *FLASH_If_Read  (uint32_t Add, uint32_t Len);
+uint16_t FLASH_If_Verify  (uint32_t Add, uint32_t Len);
 uint16_t FLASH_If_DeInit(void);
 uint16_t FLASH_If_CheckAdd(uint32_t Add);
 
@@ -53,6 +54,7 @@ DFU_MAL_Prop_TypeDef DFU_Flash_cb =
     FLASH_If_Erase,
     FLASH_If_Write,
     FLASH_If_Read,
+    FLASH_If_Verify,
     FLASH_If_CheckAdd,
     50, /* Erase Time in ms */
     50  /* Programming Time in ms */
@@ -103,7 +105,7 @@ uint16_t FLASH_If_Erase(uint32_t Add)
 
   /* Check which sector has to be erased */
   uint16_t FLASH_Sector = FLASH_SectorToErase(FLASH_INTERNAL, Add);
-  FLASH_EraseSector(FLASH_Sector, VoltageRange_3);
+  FLASH_Status status = FLASH_EraseSector(FLASH_Sector, VoltageRange_3);
 
 #elif defined(STM32F10X_CL)
   /* Call the standard Flash erase function */
@@ -112,6 +114,8 @@ uint16_t FLASH_If_Erase(uint32_t Add)
 
   /* Lock the internal flash */
   FLASH_Lock();
+
+  if (status != FLASH_COMPLETE) return MAL_FAIL;
 
   return MAL_OK;
 }
@@ -141,14 +145,17 @@ uint16_t FLASH_If_Write(uint32_t Add, uint32_t Len)
   FLASH_ClearFlags();
 
   /* Data received are Word multiple */
-  for (idx = 0; idx <  Len; idx = idx + 4)
+  FLASH_Status status = FLASH_COMPLETE;
+  for (idx = 0; idx < Len && status == FLASH_COMPLETE; idx = idx + 4)
   {
-    FLASH_ProgramWord(Add, *(uint32_t *)(MAL_Buffer + idx));
+    status = FLASH_ProgramWord(Add, *(uint32_t *)(MAL_Buffer + idx));
     Add += 4;
   }
 
   /* Lock the internal flash */
   FLASH_Lock();
+
+  if (status != FLASH_COMPLETE) return MAL_FAIL;
 
   return MAL_OK;
 }
@@ -171,7 +178,30 @@ const uint8_t *FLASH_If_Read (uint32_t Add, uint32_t Len)
   return (uint8_t*)(MAL_Buffer);
 #else
   return  (const uint8_t *)(Add);
-#endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */
+#endif // USB_OTG_HS_INTERNAL_DMA_ENABLED
+}
+
+/**
+  * @brief  FLASH_If_Verify
+  *         Memory verify routine. Assumes FLASH_If_Write was
+  *         called just prior, with same Add and Len.
+  * @param  Add: Address to be read/verified from.
+  * @param  Len: Number of data to be read/verified (in bytes).
+  * @retval MAL_OK if operation is successeful, MAL_FAIL else.
+  */
+uint16_t FLASH_If_Verify (uint32_t Add, uint32_t Len)
+{
+  uint16_t status = MAL_OK;
+  uint32_t idx = 0;
+  for (idx = 0; idx < Len; idx += 4)
+  {
+    if ( (*(uint32_t*)(MAL_Buffer + idx)) != (*(uint32_t *)(Add + idx)) )
+    {
+      status = MAL_FAIL;
+      break;
+    }
+  }
+  return status;
 }
 
 /**

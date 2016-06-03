@@ -8,7 +8,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 typedef class Stream Stream;
 #include <stdint.h>
 
@@ -45,7 +45,7 @@ bool system_fileTransfer(system_file_transfer_t* transfer, void* reserved=NULL);
 void system_lineCodingBitRateHandler(uint32_t bitrate);
 
 bool system_module_info(appender_fn appender, void* append_data, void* reserved=NULL);
-bool system_version_info(Appender* appender);
+bool append_system_version_info(Appender* appender);
 
 /**
  *
@@ -73,6 +73,57 @@ int Spark_Finish_Firmware_Update(FileTransfer::Descriptor& file, uint32_t flags,
  * @return
  */
 int Spark_Save_Firmware_Chunk(FileTransfer::Descriptor& file, const uint8_t* chunk, void* reserved);
+
+typedef enum
+{
+    /**
+     * When 0, no OTA update is pending.
+     * When 1, an OTA update is pending, and will start when the SYSTEM_FLAG_OTA_UPDATES_FLAG
+     * is set.
+     */
+    SYSTEM_FLAG_OTA_UPDATE_PENDING,
+
+    /**
+     * When 0, OTA updates are not started.
+     * When 1, OTA updates are started. Default.
+     */
+    SYSTEM_FLAG_OTA_UPDATE_ENABLED,
+
+    /*
+     * When 0, no reset is pending.
+     * When 1, a reset is pending. The system will perform the reset
+     * when SYSTEM_FLAG_RESET_ENABLED is set to 1.
+     */
+    SYSTEM_FLAG_RESET_PENDING,
+
+    /**
+     * When 0, the system is not able to perform a system reset.
+     * When 1, thee system will reset the device when a reset is pending.
+     */
+    SYSTEM_FLAG_RESET_ENABLED,
+
+    /**
+     * A persistent flag that when set will cause the system to startup
+     * in listening mode if booting in safe mode. The flag is automatically
+     * cleared on reboot.
+     */
+    SYSTEM_FLAG_STARTUP_SAFE_LISTEN_MODE,
+
+	/**
+	 * Enable/Disable use of serial1 during setup.
+	 */
+	SYSTEM_FLAG_WIFITESTER_OVER_SERIAL1,
+
+    SYSTEM_FLAG_MAX
+
+} system_flag_t;
+
+
+void system_shutdown_if_needed();
+void system_pending_shutdown();
+
+int system_set_flag(system_flag_t flag, uint8_t value, void* reserved);
+int system_get_flag(system_flag_t flag, uint8_t* value,void* reserved);
 
 #ifdef __cplusplus
 }

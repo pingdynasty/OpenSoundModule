@@ -31,7 +31,7 @@
 #include "string_convert.h"
 #include "system_cloud_internal.h"
 
-#if MODULAR_FIRMWARE
+#if 0 //MODULAR_FIRMWARE
 // The usual wiring implementations are dependent upon I2C, SPI and other global instances. Rewriting the GPIO functions to talk directly to the HAL
 
 void pinMode(pin_t pin, PinMode setMode) {
@@ -45,7 +45,6 @@ void digitalWrite(pin_t pin, uint8_t value) {
 int32_t digitalRead(pin_t pin) {
     return HAL_GPIO_Read(pin);
 }
-
 #endif
 
 #if PLATFORM_ID==4 || PLATFORM_ID==5 || PLATFORM_ID==6 || PLATFORM_ID==7 || PLATFORM_ID==8
@@ -79,10 +78,13 @@ const char cmd_UNLOCK[] = "UNLOCK:";
 const char cmd_REBOOT[] = "REBOOT:";
 const char cmd_INFO[] = "INFO:";
 const char cmd_CLEAR[] = "CLEAR:";
+#if WIFI_SCAN
 const char cmd_WIFI_SCAN[] = "WIFI_SCAN:";
+const char cmd_ANT[] = "ANT";
+#endif
 const char cmd_SET_PIN[] = "SET_PIN:";
 const char cmd_SET_PRODUCT[] = "SET_PRODUCT:";
-const char cmd_ANT[] = "ANT";
+
 
 
 void WiFiTester::setup(bool useSerial1) {
@@ -93,8 +95,8 @@ void WiFiTester::setup(bool useSerial1) {
     RGB.control(true);
     RGB.color(64, 0, 0);
 
-    pinMode(D2, OUTPUT);
-    digitalWrite(D2, LOW);
+    HAL_Pin_Mode(D2, OUTPUT);
+    HAL_GPIO_Write(D2, LOW);
 
     serialPrintln("GOOD DAY, WIFI TESTER AT YOUR SERVICE!!!");
     //DONE: startup without wifi, via SEMI_AUTOMATIC mode
@@ -108,7 +110,7 @@ void WiFiTester::loop(int c) {
     if (WiFi.ready() && (dhcp_notices < 5)) {
         serialPrintln(" DHCP DHCP DHCP ! DHCP DHCP DHCP ! DHCP DHCP DHCP !");
         RGB.color(255, 0, 255);
-        digitalWrite(D2, HIGH);
+        HAL_GPIO_Write(D2, HIGH);
         dhcp_notices++;
     } else if (wifi_testing) {
         state = !state;
@@ -197,8 +199,8 @@ void WiFiTester::wifiScan() {
 
 void setPinOutput(uint16_t pin, uint16_t value)
 {
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, value);
+    HAL_Pin_Mode(pin, OUTPUT);
+    HAL_GPIO_Write(pin, value);
 }
 
 void setPinOutputRange(uint16_t start, uint16_t end, uint16_t value)

@@ -21,14 +21,26 @@
 #define	CELLULAR_HAL_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
-#include "wlan_hal.h"
+#include "net_hal.h"
+#include "inet_hal.h"
+#include "system_tick_hal.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef struct __attribute__((__packed__))  _CellularConfig_t {
+    uint16_t size;
+    NetworkConfig nw;
+} CellularConfig;
+
 typedef int cellular_result_t;
+
+typedef int (*_CALLBACKPTR_MDM)(int type, const char* buf, int len, void* param);
+
+typedef void (*_CELLULAR_SMS_CB_MDM)(void* data, int index);
 
 /**
  * Power on and initialize the cellular module,
@@ -90,7 +102,7 @@ cellular_result_t  cellular_gprs_detach(void* reserved);
 /**
  * Fetch the ip configuration.
  */
-cellular_result_t  cellular_fetch_ipconfig(WLanConfig* config, void* reserved);
+cellular_result_t  cellular_fetch_ipconfig(CellularConfig* config, void* reserved);
 
 #ifdef __cplusplus
 struct CellularDevice
@@ -126,10 +138,79 @@ CellularCredentials* cellular_credentials_get(void* reserved);
 
 bool cellular_sim_ready(void* reserved);
 
+/**
+ * Attempts to stop/resume the cellular modem from performing AT operations.
+ * Called from another thread or ISR context.
+ *
+ * @param cancel: true to cancel AT operations, false will resume AT operations.
+ *        calledFromISR: true if called from ISR, false if called from main system thread.
+ *        reserved: pass NULL. Allows future expansion.
+ */
+void cellular_cancel(bool cancel, bool calledFromISR, void* reserved);
+
+#ifdef __cplusplus
+struct CellularSignalHal
+{
+    int rssi = 0;
+    int qual = 0;
+};
+#else
+typedef struct CellularSignalHal CellularSignalHal;
+#endif
+
+/**
+ * Retrieve cellular signal strength info
+ */
+cellular_result_t cellular_signal(CellularSignalHal &signal, void* reserved);
+
+/**
+ * Send an AT command and wait for response, optionally specify a callback function to parse the results
+ */
+cellular_result_t cellular_command(_CALLBACKPTR_MDM cb, void* param,
+                         system_tick_t timeout_ms, const char* format, ...);
+
+#ifdef __cplusplus
+struct CellularDataHal {
+    uint16_t size;
+    int cid;
+    int tx_session_offset;
+    int rx_session_offset;
+    int tx_total_offset;
+    int rx_total_offset;
+    int tx_session;
+    int rx_session;
+    int tx_total;
+    int rx_total;
+
+    CellularDataHal()
+    {
+        memset(this, 0, sizeof(*this));
+        cid = -1;
+        size = sizeof(*this);
+    }
+};
+#else
+typedef struct CellularDataHal CellularDataHal;
+#endif
+
+/**
+ * Set cellular data usage info
+ */
+cellular_result_t cellular_data_usage_set(CellularDataHal* data, void* reserved);
+
+/**
+ * Get cellular data usage info
+ */
+cellular_result_t cellular_data_usage_get(CellularDataHal* data, void* reserved);
+
+/**
+ * Set the SMS received callback handler
+ */
+cellular_result_t cellular_sms_received_handler_set(_CELLULAR_SMS_CB_MDM cb, void* data, void* reserved);
+
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif	/* CELLULAR_HAL_H */
 

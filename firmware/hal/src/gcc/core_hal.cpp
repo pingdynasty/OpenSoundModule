@@ -32,18 +32,37 @@
 #include <cstdint>
 #include <iostream>
 #include "filesystem.h"
+#include "service_debug.h"
+#include "device_config.h"
+#include "hal_platform.h"
+#include "interrupts_hal.h"
+#include <boost/crc.hpp>  // for boost::crc_32_type
+
 
 using std::cout;
 
-class Stream;
-extern "C" bool Ymodem_Serial_Flash_Update(Stream *serialObj, uint32_t sFlashAddress)
+void debug_output_(const char* msg);
+
+void setLoggerLevel(LoggerOutputLevel level)
 {
-    return false;
+    set_logger_output(debug_output_, level);
 }
 
+extern "C" int main(int argc, char* argv[])
+{
+    setLoggerLevel(NO_LOG_LEVEL);
+    if (read_device_config(argc, argv)) {
+        app_setup_and_loop();
+    }
+    return 0;
+}
 
-
-void debug_output_(const char* msg) {
+/**
+ * Output debug info to standard output.
+ * @param msg
+ */
+void debug_output_(const char* msg)
+{
     cout << msg << std::endl;
 }
 
@@ -96,13 +115,6 @@ char* bytes2hex(const uint8_t* buf, char* result, unsigned len)
  *******************************************************************************/
 void HAL_Core_Config(void)
 {
-    unsigned len = HAL_device_ID(NULL, 0);
-    uint8_t id[len];
-    char hex[len*2+1];
-    HAL_device_ID(id, len);
-    *bytes2hex(id, hex, len)=0;
-
-    MSG("Core device id %s", hex);
 }
 
 bool HAL_Core_Mode_Button_Pressed(uint16_t pressedMillisDuration)
@@ -116,8 +128,7 @@ void HAL_Core_Mode_Button_Reset(void)
 
 void HAL_Core_System_Reset(void)
 {
-    // todo - terminate the process, or throw an exception to have the top level loop unwind.
-    MSG("System reset not implemented.");
+    exit(0);
 }
 
 void HAL_Core_Factory_Reset(void)
@@ -127,7 +138,7 @@ void HAL_Core_Factory_Reset(void)
 
 void HAL_Core_Enter_Safe_Mode(void* reserved)
 {
-    MSG("Enter sate mode not implemented.");
+    MSG("Enter safe mode not implemented.");
 }
 
 
@@ -136,7 +147,7 @@ void HAL_Core_Enter_Bootloader(void)
     MSG("Enter bootloader not implemented.");
 }
 
-void HAL_Core_Enter_Stop_Mode(uint16_t wakeUpPin, uint16_t edgeTriggerMode)
+void HAL_Core_Enter_Stop_Mode(uint16_t wakeUpPin, uint16_t edgeTriggerMode, long seconds)
 {
     MSG("Stop mode not implemented.");
 }
@@ -221,9 +232,12 @@ crc32(uint32_t crc, const uint8_t* buf, size_t size)
  * @param  BufferSize: Size of the buffer to be computed
  * @retval 32-bit CRC
  */
-uint32_t HAL_Core_Compute_CRC32(uint8_t *pBuffer, uint32_t bufferSize)
+uint32_t HAL_Core_Compute_CRC32(const uint8_t *pBuffer, uint32_t bufferSize)
 {
-    return crc32(0, pBuffer, bufferSize);
+	boost::crc_32_type  result;
+	result.process_bytes(pBuffer, bufferSize);
+	return result.checksum();
+    //return crc32(0, pBuffer, bufferSize);
 }
 
 // todo find a technique that allows accessor functions to be inlined while still keeping
@@ -241,31 +255,24 @@ void HAL_Core_Init(void)
 {
 }
 
-extern "C" int main(int argc, char* argv[]) {
-    if (argc>1) {
-        printf("set keys folder to %s\n", argv[1]);
-        set_root_dir(argv[1]);
-    }
-    app_setup_and_loop();
-    return 0;
-}
-
 void HAL_Bootloader_Lock(bool lock)
 {
 }
 
-uint32_t HAL_Core_Compute_CRC32(const uint8_t *pBuffer, uint32_t bufferSize)
-{
-    return 0;
-}
-
 uint16_t HAL_Bootloader_Get_Flag(BootloaderFlag flag)
 {
+	if (flag==BOOTLOADER_FLAG_STARTUP_MODE)
+		return 0xFF;
     return 0xFFFF;
 }
 
 void HAL_Core_Enter_Bootloader(bool persist)
 {
+}
+
+uint32_t HAL_Core_Runtime_Info(runtime_info_t* info, void* reserved)
+{
+    return -1;
 }
 
 unsigned HAL_Core_System_Clock(HAL_SystemClock clock, void* reserved)
@@ -285,5 +292,71 @@ int HAL_Feature_Set(HAL_Feature feature, bool enabled)
 
 bool HAL_Feature_Get(HAL_Feature feature)
 {
+    switch (feature)
+    {
+        case FEATURE_CLOUD_UDP:
+        {
+        		uint8_t value = false;
+#if HAL_PLATFORM_CLOUD_UDP
+        		value = (deviceConfig.get_protocol()==PROTOCOL_DTLS);
+#endif
+        		return value;
+        }
+    }
     return false;
+}
+
+#if HAL_PLATFORM_CLOUD_UDP
+
+#include "dtls_session_persist.h"
+SessionPersistDataOpaque session;
+
+int HAL_System_Backup_Save(size_t offset, const void* buffer, size_t length, void* reserved)
+{
+    if (offset==0 && length==sizeof(SessionPersistDataOpaque))
+    {
+        memcpy(&session, buffer, length);
+        return 0;
+    }
+    return -1;
+}
+
+int HAL_System_Backup_Restore(size_t offset, void* buffer, size_t max_length, size_t* length, void* reserved)
+{
+    if (offset==0 && max_length>=sizeof(SessionPersistDataOpaque) && session.size==sizeof(SessionPersistDataOpaque))
+    {
+        *length = sizeof(SessionPersistDataOpaque);
+        memcpy(buffer, &session, sizeof(session));
+        return 0;
+    }
+    return -1;
+}
+
+
+#else
+
+int HAL_System_Backup_Save(size_t offset, const void* buffer, size_t length, void* reserved)
+{
+    return -1;
+}
+
+int HAL_System_Backup_Restore(size_t offset, void* buffer, size_t max_length, size_t* length, void* reserved)
+{
+    return -1;
+}
+
+#endif
+
+int32_t HAL_Core_Backup_Register(uint32_t BKP_DR)
+{
+    return -1;
+}
+
+void HAL_Core_Write_Backup_Register(uint32_t BKP_DR, uint32_t Data)
+{
+}
+
+uint32_t HAL_Core_Read_Backup_Register(uint32_t BKP_DR)
+{
+    return 0xFFFFFFFF;
 }

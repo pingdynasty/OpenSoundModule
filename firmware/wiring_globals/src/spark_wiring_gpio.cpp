@@ -100,7 +100,11 @@ bool pinAvailable(uint16_t pin) {
     return 0; // 'pin' is used
   }
 #endif
-  return 1; // 'pin' is available
+
+  if (pin >= TOTAL_PINS)
+    return 0;
+  else
+    return 1; // 'pin' is available
 }
 
 inline bool is_input_mode(PinMode mode) {
@@ -204,6 +208,31 @@ void analogWrite(pin_t pin, uint16_t value)
 }
 
 
+/*
+ * @brief Should take an integer 0-255 and create a PWM signal with a duty cycle from 0-100%
+ * and frequency from 1 to 65535 Hz.
+ */
+void analogWrite(pin_t pin, uint16_t value, uint16_t pwm_frequency)
+{
+    // Safety check
+    if (!pinAvailable(pin))
+    {
+        return;
+    }
+
+    if (HAL_Validate_Pin_Function(pin, PF_TIMER) == PF_TIMER)
+    {
+        PinMode mode = HAL_Get_Pin_Mode(pin);
+
+        if (mode != OUTPUT && mode != AF_OUTPUT_PUSHPULL)
+        {
+            return;
+        }
+
+        HAL_PWM_Write_With_Frequency(pin, value, pwm_frequency);
+    }
+}
+
 uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) {
   uint8_t value = 0;
   uint8_t i;
@@ -232,4 +261,16 @@ void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
     digitalWrite(clockPin, HIGH);
     digitalWrite(clockPin, LOW);
   }
+}
+
+/*
+ * @brief   blocking call to measure a high or low pulse
+ * @returns uint32_t pulse width in microseconds up to 3 seconds,
+ *          returns 0 on 3 second timeout error, or invalid pin.
+ */
+uint32_t pulseIn(pin_t pin, uint16_t value) {
+
+    // NO SAFETY CHECKS!!! WILD WILD WEST!!!
+
+    return HAL_Pulse_In(pin, value);
 }

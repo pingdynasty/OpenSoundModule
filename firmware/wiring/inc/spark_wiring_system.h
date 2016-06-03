@@ -21,7 +21,7 @@
  */
 
 #ifndef SPARK_WIRING_SYSTEM_H
-#define	SPARK_WIRING_SYSTEM_H
+#define SPARK_WIRING_SYSTEM_H
 #include "spark_wiring_ticks.h"
 #include "spark_wiring_string.h"
 #include "spark_wiring_version.h"
@@ -34,11 +34,40 @@
 #include "interrupts_hal.h"
 #include "core_hal.h"
 #include "system_user.h"
-#ifdef SPARK_PLATFORM
+#include "system_version.h"
+
+#if defined(SPARK_PLATFORM) && PLATFORM_ID!=3
+#define SYSTEM_HW_TICKS 1
+#else
+#define SYSTEM_HW_TICKS 0
+#endif
+
+#if SYSTEM_HW_TICKS
 #include "hw_ticks.h"
 #endif
 
 class Stream;
+
+class SleepNetworkFlag
+{
+public:
+    typedef uint8_t flag_t;
+    inline SleepNetworkFlag(SystemSleepNetwork f) : SleepNetworkFlag(static_cast<flag_t>(f)) {}
+
+    inline SleepNetworkFlag(flag_t flag) : flag_(flag) {}
+
+    inline explicit operator flag_t() const { return flag_; }
+
+    inline flag_t flag() const { return flag_; }
+
+private:
+    flag_t flag_;
+};
+
+// Bring the system enum into global scope
+const SleepNetworkFlag SLEEP_NETWORK_OFF(SystemSleepNetwork::Off);
+const SleepNetworkFlag SLEEP_NETWORK_STANDBY(SystemSleepNetwork::Standby);
+
 
 class SystemClass {
 public:
@@ -63,7 +92,7 @@ public:
         HAL_Core_Enter_Safe_Mode(NULL);
     }
 
-#ifdef SPARK_PLATFORM
+#if SYSTEM_HW_TICKS
     static inline uint32_t ticksPerMicrosecond()
     {
         return SYSTEM_US_TICKS;
@@ -81,36 +110,47 @@ public:
     }
 #endif
 
-    static void sleep(Spark_Sleep_TypeDef sleepMode, long seconds=0);
-    static void sleep(long seconds) { sleep(SLEEP_MODE_WLAN, seconds); }
-    static void sleep(uint16_t wakeUpPin, InterruptMode edgeTriggerMode, long seconds=0);
+    static void sleep(Spark_Sleep_TypeDef sleepMode, long seconds=0, SleepNetworkFlag flag=SLEEP_NETWORK_OFF);
+    inline static void sleep(Spark_Sleep_TypeDef sleepMode, SleepNetworkFlag flag, long seconds=0) {
+        sleep(sleepMode, seconds, flag);
+    }
+
+    inline static void sleep(long seconds) { sleep(SLEEP_MODE_WLAN, seconds); }
+    static void sleep(uint16_t wakeUpPin, InterruptMode edgeTriggerMode, long seconds=0, SleepNetworkFlag flag=SLEEP_NETWORK_OFF);
+    inline static void sleep(uint16_t wakeUpPin, InterruptMode edgeTriggerMode, SleepNetworkFlag flag, long seconds=0) {
+        sleep(wakeUpPin, edgeTriggerMode, seconds, flag);
+    }
+
     static String deviceID(void) { return spark_deviceID(); }
 
     static uint16_t buttonPushed(uint8_t button=0) {
         return system_button_pushed_duration(button, NULL);
     }
 
-    static bool on(system_event_t events, void(*handler)(system_event_t, uint32_t,void*)) {
-        return !system_subscribe_event(events, handler, nullptr);
+    static bool on(system_event_t events, void(*handler)(system_event_t, int,void*)) {
+        return !system_subscribe_event(events, reinterpret_cast<system_event_handler_t*>(handler), nullptr);
     }
 
-    /* Contemplating allowing the callback to be a subset of the parameters
-    static bool on(system_event_t events, void(*handler)(system_event_t, uint32_t)) {
-        return system_subscribe_event(events, (system_event_handler_t*)handler, NULL);
+    static bool on(system_event_t events, void(*handler)(system_event_t, int)) {
+        return system_subscribe_event(events, reinterpret_cast<system_event_handler_t*>(handler), NULL);
     }
 
     static bool on(system_event_t events, void(*handler)(system_event_t)) {
-        return system_subscribe_event(events, (system_event_handler_t*)handler, NULL);
+        return system_subscribe_event(events, reinterpret_cast<system_event_handler_t*>(handler), NULL);
     }
 
     static bool on(system_event_t events, void(*handler)()) {
-        return system_subscribe_event(events, (system_event_handler_t*)handler, NULL);
+        return system_subscribe_event(events, reinterpret_cast<system_event_handler_t*>(handler), NULL);
     }
-    */
 
-    static void off(void(*handler)(system_event_t, uint32_t,void*)) {
+    static void off(void(*handler)(system_event_t, int,void*)) {
         system_unsubscribe_event(all_events, handler, nullptr);
     }
+
+    static void off(system_event_t events, void(*handler)(system_event_t, int,void*)) {
+        system_unsubscribe_event(events, handler, nullptr);
+    }
+
 
     static uint32_t freeMemory();
 
@@ -143,22 +183,99 @@ public:
 
     inline bool featureEnabled(HAL_Feature feature)
     {
+        if (feature==FEATURE_WARM_START)
+            return __backup_ram_was_valid();
         return HAL_Feature_Get(feature);
     }
 
     inline int enableFeature(HAL_Feature feature)
     {
-        int result = HAL_Feature_Set(feature, true);
-        if (feature==FEATURE_RETAINED_MEMORY && !HAL_Feature_Get(FEATURE_WARM_START)) {
-            system_initialize_user_backup_ram();
-        }
-        return result;
+        return HAL_Feature_Set(feature, true);
     }
 
     inline int disableFeature(HAL_Feature feature)
     {
         return HAL_Feature_Set(feature, false);
     }
+
+    String version()
+    {
+        SystemVersionInfo info;
+        system_version_info(&info, nullptr);
+        return String(info.versionString);
+    }
+
+    uint32_t versionNumber()
+    {
+        SystemVersionInfo info;
+        system_version_info(&info, nullptr);
+        return info.versionNumber;
+    }
+
+    inline void enableUpdates()
+    {
+        set_flag(SYSTEM_FLAG_OTA_UPDATE_ENABLED, true);
+    }
+
+    inline void disableUpdates()
+    {
+        set_flag(SYSTEM_FLAG_OTA_UPDATE_ENABLED, false);
+    }
+
+    inline uint8_t updatesPending()
+    {
+        return get_flag(SYSTEM_FLAG_OTA_UPDATE_PENDING)!=0;
+    }
+
+    inline uint8_t updatesEnabled()
+    {
+        return get_flag(SYSTEM_FLAG_OTA_UPDATE_ENABLED)!=0;
+    }
+
+
+    inline void enableReset()
+    {
+        set_flag(SYSTEM_FLAG_RESET_ENABLED, true);
+    }
+
+    inline void disableReset()
+    {
+        set_flag(SYSTEM_FLAG_RESET_ENABLED, false);
+    }
+
+    inline uint8_t resetEnabled()
+    {
+        return get_flag(SYSTEM_FLAG_RESET_ENABLED)!=0;
+    }
+
+    inline uint8_t resetPending()
+    {
+        return get_flag(SYSTEM_FLAG_RESET_PENDING)!=0;
+    }
+
+    inline void enable(system_flag_t flag) {
+    		set_flag(flag, true);
+    }
+
+    inline void disable(system_flag_t flag) {
+		set_flag(flag, false);
+    }
+
+
+private:
+
+    inline uint8_t get_flag(system_flag_t flag)
+    {
+        uint8_t value = 0;
+        system_get_flag(flag, &value, nullptr);
+        return value;
+    }
+
+    inline void set_flag(system_flag_t flag, uint8_t value)
+    {
+        system_set_flag(flag, value, nullptr);
+    }
+
 
 };
 
@@ -171,5 +288,5 @@ extern SystemClass System;
 #define waitFor(condition, timeout) System.waitCondition([]{ return (condition)(); }, (timeout))
 #define waitUntil(condition) System.waitCondition([]{ return (condition)(); })
 
-#endif	/* SPARK_WIRING_SYSTEM_H */
+#endif /* SPARK_WIRING_SYSTEM_H */
 

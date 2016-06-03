@@ -87,6 +87,19 @@ public:
         return IPAddress(wifi_config()->nw.aucDefaultGateway);
     }
 
+    IPAddress dnsServerIP() {
+    	return IPAddress(wifi_config()->nw.aucDNSServer);
+    }
+
+    IPAddress dhcpServerIP() {
+    	return IPAddress(wifi_config()->nw.aucDHCPServer);
+    }
+
+    uint8_t* BSSID(uint8_t* bssid) {
+    		memcpy(bssid, wifi_config()->BSSID, 6);
+    		return bssid;
+    }
+
     const char *SSID() {
         return (const char *) wifi_config()->uaSSID;
     }
@@ -226,6 +239,8 @@ public:
     int scan(void (*handler)(WiFiAccessPoint* ap, T* instance), T* instance) {
         return scan((wlan_scan_result_t)handler, (void*)instance);
     }
+
+    int getCredentials(WiFiAccessPoint* results, size_t result_count);
 };
 
 extern WiFiClass WiFi;

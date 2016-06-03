@@ -116,12 +116,18 @@
 #define configUSE_16_BIT_TICKS		0
 #define configIDLE_SHOULD_YIELD		1
 #define configUSE_MUTEXES			1
+#define configUSE_RECURSIVE_MUTEXES  1
 #define configENABLE_BACKWARD_COMPATIBILITY 1
 #define configUSE_COUNTING_SEMAPHORES 1
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
 #define configMAX_CO_ROUTINE_PRIORITIES ( 2 )
+#define configUSE_TIMERS                (1)
+#define configTIMER_TASK_PRIORITY                   ( 2 )
+#define configTIMER_QUEUE_LENGTH                    ( 5 )
+#define configTIMER_TASK_STACK_DEPTH                ( ( unsigned short ) (1024 / sizeof( portSTACK_TYPE )) )
+
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
@@ -148,6 +154,10 @@ configKERNEL_INTERRUPT_PRIORITY setting.  Here 15 corresponds to the lowest
 NVIC value of 255. */
 #define configLIBRARY_KERNEL_INTERRUPT_PRIORITY	15
 
+/* Enable stack overflow detection for debug builds (see rtos_hook.cpp) */
+#ifdef DEBUG_BUILD
+# define configCHECK_FOR_STACK_OVERFLOW 2
+#endif
 
 #define xPortPendSVHandler PendSV_Handler
 #define vPortSVCHandler SVC_Handler

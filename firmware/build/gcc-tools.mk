@@ -7,13 +7,27 @@ include $(COMMON_BUILD)/common-tools.mk
 # default flags for targeting ARM
 #
 
-# C compiler flags
-CFLAGS +=  -g3 -m64
+GCC_OPTIMIZE=3
+ifeq ($(DEBUG_BUILD),y)
+     GCC_OPTIMIZE=0
+endif
 
+# C compiler flags
+CFLAGS +=  -g3 -m64 -O$(GCC_OPTIMIZE) -gdwarf-2
+CFLAGS += -Wno-unused-local-typedefs -Wno-return-type-c-linkage 
+CPPFLAGS += -Wno-unused-private-field
 ASFLAGS +=  -g3
 
 
-#LDFLAGS += -Xlinker --gc-sections
+ifeq ("$(MAKE_OS)", "LINUX")
+LDFLAGS +=  -pthread
+endif
+
+ifneq ($(MAKE_OS),OSX)
+LDFLAGS += -Xlinker --gc-sections
+endif
+
+
 
 
 

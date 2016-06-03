@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-uint32_t HAL_WLAN_SetNetWatchDog(uint32_t timeOutInuS);
+uint32_t HAL_NET_SetNetWatchDog(uint32_t timeOutInuS);
 void Network_Setup(bool threaded);
 
 /**
@@ -58,7 +58,6 @@ extern volatile uint32_t TimingFlashUpdateTimeout;
 extern volatile uint8_t SPARK_WLAN_RESET;
 extern volatile uint8_t SPARK_WLAN_SLEEP;
 extern volatile uint8_t SPARK_WLAN_STARTED;
-extern volatile uint8_t SPARK_CLOUD_CONNECT;
 extern volatile uint8_t SPARK_CLOUD_SOCKETED;
 extern volatile uint8_t SPARK_CLOUD_CONNECTED;
 extern volatile uint8_t SPARK_FLASH_UPDATE;
@@ -66,6 +65,7 @@ extern volatile uint8_t SPARK_LED_FADE;
 
 extern volatile uint8_t Spark_Error_Count;
 extern volatile uint8_t Cloud_Handshake_Error_Count;
+extern volatile uint8_t SYSTEM_POWEROFF;
 
 extern volatile system_tick_t spark_loop_total_millis;
 
@@ -75,6 +75,12 @@ void system_delay_ms(unsigned long ms, bool no_background_loop);
  * Determines the backoff period after a number of failed connections.
  */
 unsigned backoff_period(unsigned connection_attempts);
+
+/**
+ * This is for internal testing. Do not call this function since it is not
+ * guaranteed to be preserved or backwards compatible between releases.
+ */
+void* system_internal(int item, void* reserved);
 
 
 #ifdef __cplusplus
