@@ -5,7 +5,7 @@
 #include "ApplicationSettings.h"
 #include "UdpServer.h"
 
-#define MAX_OSC_COMMANDS 8
+#define OSC_MAX_COMMANDS 8
 // #define UDP_SERIAL_DEBUG
 
 class OscServer : public UdpServer {
@@ -15,11 +15,11 @@ class OscServer : public UdpServer {
     uint8_t minArgs;
     OscCommand* cmd;
     bool matches(OscMessage& msg){
-      return strncmp(msg.getAddress(), address, MAX_OSC_ADDRESS_LEN) == 0 && msg.getSize() >= minArgs;
+      return strncmp(msg.getAddress(), address, OSC_ADDRESS_MAX_LEN) == 0 && msg.getSize() >= minArgs;
     }
   };
   int commandCount;
-  OscCommandMap commands[MAX_OSC_COMMANDS];
+  OscCommandMap commands[OSC_MAX_COMMANDS];
 public:
   OscServer() : commandCount(0) {}
 
@@ -68,9 +68,9 @@ public:
   }
 
   void addCommand(const char* address, OscCommand* cmd, int minArgs = 0){
-    if(commandCount < MAX_OSC_COMMANDS){
-      //      strncpy(commands[commandCount].address, address, MAX_OSC_ADDRESS_LEN);
-      //      commands[commandCount].address[MAX_OSC_ADDRESS_LEN-1] = '\0';
+    if(commandCount < OSC_MAX_COMMANDS){
+      //      strncpy(commands[commandCount].address, address, OSC_ADDRESS_MAX_LEN);
+      //      commands[commandCount].address[OSC_ADDRESS_MAX_LEN-1] = '\0';
       commands[commandCount].address = address;
       commands[commandCount].minArgs = minArgs;
       commands[commandCount].cmd = cmd;    
@@ -86,8 +86,8 @@ public:
 
   void setAddress(int cmd, const char* address){
     if(cmd < commandCount){
-      //      strncpy(commands[cmd].address, address, MAX_OSC_ADDRESS_LEN);
-      //      commands[cmd].address[MAX_OSC_ADDRESS_LEN-1] = '\0';
+      //      strncpy(commands[cmd].address, address, OSC_ADDRESS_MAX_LEN);
+      //      commands[cmd].address[OSC_ADDRESS_MAX_LEN-1] = '\0';
       commands[cmd].address = address;
     }
   }

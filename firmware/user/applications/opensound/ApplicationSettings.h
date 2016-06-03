@@ -2,12 +2,13 @@
 #define __ApplicationSettings_H__
 
 #include <inttypes.h>
-#include "application.h"
+/* #include "application.h" */
+#include "opensound.h"
+#define OSC_ADDRESS_MAX_LEN         27
 
 #define NETWORK_SETTINGS_ADDRESS 0
 #define ADDRESS_SETTINGS_ADDRESS 64
 #define RANGE_SETTINGS_ADDRESS   128
-#define MAX_OSC_ADDRESS_LEN 16
 /* The photon has 2048 bytes of emulated EEPROM. */
 
 template<int address>
@@ -66,8 +67,8 @@ public:
 
 class AddressSettings : public ApplicationSettings<ADDRESS_SETTINGS_ADDRESS> {
 public:
-  char inputAddress[5][MAX_OSC_ADDRESS_LEN];
-  char outputAddress[5][MAX_OSC_ADDRESS_LEN];
+  char inputAddress[5][OSC_ADDRESS_MAX_LEN];
+  char outputAddress[5][OSC_ADDRESS_MAX_LEN];
 public:
   void reset();
   bool equals(const AddressSettings& other){
@@ -89,12 +90,12 @@ public:
     return outputAddress[i];
   }
   void setInputAddress(int i, const char* address){
-    strncpy(inputAddress[i], address, MAX_OSC_ADDRESS_LEN);
-    inputAddress[i][MAX_OSC_ADDRESS_LEN-1] = '\0';
+    strncpy(inputAddress[i], address, OSC_ADDRESS_MAX_LEN);
+    inputAddress[i][OSC_ADDRESS_MAX_LEN-1] = '\0';
   }
   void setOutputAddress(int i, const char* address){
-    strncpy(outputAddress[i], address, MAX_OSC_ADDRESS_LEN);
-    outputAddress[i][MAX_OSC_ADDRESS_LEN-1] = '\0';
+    strncpy(outputAddress[i], address, OSC_ADDRESS_MAX_LEN);
+    outputAddress[i][OSC_ADDRESS_MAX_LEN-1] = '\0';
   }
 };
 
