@@ -122,7 +122,7 @@ bool net_disconnect(){
   wiced_result_t result;
   debugMessage("net_disconnect");
   result = (wiced_result_t)wlan_disconnect_now();
-  HAL_WLAN_notify_disconnected();
+  HAL_NET_notify_disconnected();
   return result == WICED_SUCCESS;  
 }
 #else
@@ -165,8 +165,8 @@ bool ConnectionManager::start(ServiceType type){
     else if(selected_network == NETWORK_ACCESS_POINT)
       result = net_connect_ap();
     if(result)
-      HAL_WLAN_notify_connected();
-    HAL_WLAN_notify_dhcp(result);
+      HAL_NET_notify_connected();
+    HAL_NET_notify_dhcp(result);
 #else
     WiFi.connect();
     result = true;
