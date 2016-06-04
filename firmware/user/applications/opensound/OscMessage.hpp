@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <inttypes.h>
-// #include "application.h"
 // #include "opensound.h"
 
 class OscMessage {
@@ -291,6 +290,19 @@ public:
     return u.d;
   }
 
+  void setAddress(const char* addr){
+    if(types != address){
+      // save old types
+      char saved[strlen((char*)types)];
+      strcpy(saved, (char*)types);
+      setPrefix(addr, saved);
+    }else{
+      strcpy((char*)address, addr);
+      types = address+calculateAddressLength();
+      data = types;
+    }
+  }
+
   void setPrefix(const char* addr, const char* tags){    
     // strncpy(address, addr, end-address);
     // If the length of src is less than n, strncpy() writes additional null
@@ -353,7 +365,7 @@ public:
 
   void setString(uint8_t index, const char* str, size_t length){
     char* ptr = (char*)getData(index);
-    for(int i=0; i<length && ptr < (char*)end-1; ++i)
+    for(size_t i=0; i<length && ptr < (char*)end-1; ++i)
       *ptr++ = str[i];
     do{
       // pad to 4 bytes

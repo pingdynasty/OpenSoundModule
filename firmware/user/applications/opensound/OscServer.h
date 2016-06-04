@@ -94,7 +94,7 @@ public:
 
   void udp_recv_packet(uint8_t* buffer, int size){
     if(size >= 28 && strncmp((const char*)buffer, "#bundle", 7) == 0){
-      int len = OscMessage::getOscInt(buffer+16);
+      int len = OscMessage::getOscInt32(buffer+16);
       buffer += 16; // discard #bundle and timestamp
       size -= 16;
 #ifdef UDP_SERIAL_DEBUG
@@ -107,7 +107,7 @@ public:
 	processMessage(buffer+4, len);
 	buffer += len+4;
 	size -= len+4;
-	len = size >= 12 ? OscMessage::getOscInt(buffer) : 0;
+	len = size >= 12 ? OscMessage::getOscInt32(buffer) : 0;
 #ifdef UDP_SERIAL_DEBUG
       Serial.print("next ");
       Serial.print(len);
@@ -125,8 +125,8 @@ public:
     Serial.print("osc message ");
     Serial.println(size);
 #endif
-    OscMessage msg;
-    msg.parse(buffer, size);
+    OscMessage msg(buffer, size);
+    msg.parse();
     for(int i=0; i<commandCount; ++i)
       if(commands[i].matches(msg)){
 	commands[i].cmd(*this, msg);
@@ -136,7 +136,7 @@ public:
 
   void sendMessage(OscMessage& msg){
     beginPacket();
-    msg.write(*this);
+    write(msg.getBuffer(), msg.calculateMessageLength());
     endPacket();
   }
 

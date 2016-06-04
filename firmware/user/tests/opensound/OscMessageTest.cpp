@@ -1,10 +1,15 @@
 /*
-  g++ -I/opt/local/include -L/opt/local/lib OscMessageTest.cpp -lboost_unit_test_framework-mt -o OscMessageTest && ./OscMessageTest
+  g++ -Iuser/applications/opensound -I/opt/local/include -L/opt/local/lib user/tests/opensound/OscMessageTest.cpp -lboost_unit_test_framework-mt -o OscMessageTest && ./OscMessageTest
 */
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Test
 #include <boost/test/unit_test.hpp>
+
+class Print {
+public:
+  void write(void* data, int size);
+};
 
 #include "OscMessage.hpp"
 
@@ -49,9 +54,9 @@ BOOST_AUTO_TEST_CASE(testParse){
 BOOST_AUTO_TEST_CASE(testStrings){
   uint8_t buffer[64];
   OscMessage msg(buffer, sizeof(buffer));
-  msg.setPrefix("osc", "");
+  msg.setAddress("osc");
   BOOST_CHECK_EQUAL(msg.getAddressLength(), 4);
-  msg.setPrefix("data", "");
+  msg.setAddress("data");
   BOOST_CHECK_EQUAL(msg.getAddressLength(), 8);
 }
 
