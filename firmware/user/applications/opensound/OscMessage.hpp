@@ -54,11 +54,6 @@ public:
     return data-address;
   }
 
-  int getTotalDataLength(){
-    // todo: 'end' might specify capacity, not end position
-    return end-data;
-  }
-
   int getMessageLength(){
     // todo: 'end' might specify capacity, not end position
     return end-address;
@@ -69,13 +64,17 @@ public:
     for(int i=0; i<getSize(); ++i)
       size += getDataSize(i);
     return size;
-    // return size+calculateDataLength();
+   // return size+calculateDataLength();
   }
 
-  void setBuffer(uint8_t* buffer, int length){
+  uint8_t* getBuffer(){
+    return address;
+  }
+
+  void setBuffer(void* buffer, int length){
     // In a stream-based protocol such as TCP, the stream should begin with an int32 giving the size of the first packet, followed by the contents of the first packet, followed by the size of the second packet, etc.
-    address = buffer;
-    end = buffer+length;
+    address = (uint8_t*)buffer;
+    end = address+length;
   }
 
   // assumes address and end have been set
