@@ -1,132 +1,124 @@
 #ifndef __OscMessage_h__
 #define __OscMessage_h__
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
-#include "application.h"
-#include "opensound.h"
+#include <inttypes.h>
+// #include "application.h"
+// #include "opensound.h"
 
-#if 0
-// note: big endian only
-#define htonl(A)    ((((uint32_t)(A) & 0xff000000) >> 24) | \
-                     (((uint32_t)(A) & 0x00ff0000) >> 8) | \
-                     (((uint32_t)(A) & 0x0000ff00) << 8) | \
-                     (((uint32_t)(A) & 0x000000ff) << 24))
-
-class OscBase {
-private:
-  uint8_t* prefix;
-  uint8_t* types;
-  uint8_t* data;
-public:
-  int getDataSize(int offset, char type){
-    switch(type){
-    case 'c': // ASCII character sent as 32 bits
-    case 'r': // 32bit RGBA colour
-    case 'i': // 32bit integer
-    case 'f': // 32bit float
-    case 'm': // 4-byte MIDI message
-      return 4;
-    case 'h': // 64bit integer
-    case 'd': // 64bit double
-      return 8;
-    case 's': // string
-    case 'S': // symbol
-    case 'b': // blob
-      // todo - strnlen for overflow protection
-      return strlen(data+offset);
-    default:
-      return 0;
-    }
-  }
-
-  char getDataType(int8_t index){
-    return types[index];
-  }
-
-  uint8_t* getDataPointer(int8_t index){
-    int offset = 0;
-    for(int i=0; i<index && types[i] != '/0'; ++i)
-      offset += getDataSize(offset, types[i]);
-    return data+offset;
-  }
-};
-
-class OscReader : public OscMessage {
-public:
-  void parsePacket(uint8_t* buffer, int size);
-  void parseBundle(uint8_t* buffer, int size);
-  void parseMessage(uint8_t* buffer, int size);
-  void parsePrefix(uint8_t* buffer, int size);
-  void parseAddress(uint8_t* buffer, int size);
-  void parseTypes(uint8_t* buffer, int size);
-  char* getAddress();
-  char* getTypes();
-  uint8_t* getData();
-};
-
-class OscWriter : public OscMessage {
-public:
-  void setAddress(char* address);
-  void addType(char type);
-  void setInt(int index, int data);
-  void setFloat(int index, float data);
-  void setString(int index, char* data);
-};
-#endif
-
-/*
-  todo: define get/set methods with two different indexes: field and offset
-  void* getDataAt(offset) / getField(index)
-*/
 class OscMessage {
 public:
-  uint8_t prefix[OSC_MESSAGE_MAX_PREFIX_SIZE];
-  uint8_t prefixLength;
+  uint8_t* address;
   uint8_t* types;
-  uint8_t data[OSC_MESSAGE_MAX_DATA_SIZE];
-  uint8_t dataLength;
+  uint8_t* data;
+  uint8_t* end;
 public:
-  OscMessage() : prefixLength(0), types(NULL), dataLength(0){}
+  OscMessage() : address(NULL), types(NULL), data(NULL), end(NULL){}
 
-  OscMessage(const char* a) : prefixLength(0), types(NULL), dataLength(0){
-    // clear();
-    setAddress(a);
+  OscMessage(uint8_t* data, int size) {
+    setBuffer(data, size);
+    // parse();
   }
 
   void clear(){
-    memset(prefix, 0, sizeof(prefix));
-    memset(data, 0, sizeof(data));
-    prefixLength = 0;
-    dataLength = 0;
+    types = address;
+    data = address;
+    end = address;
   }
 
-  void parse(uint8_t* buffer, int length){
-    // clear();
-    setAddress((const char*)buffer);
-    int i = prefixLength;
-    while(buffer[i] != '\0'){
-      char type = (char)buffer[i++];
-      addType(type, getDataSize(type));
-    }
-    prefix[i++] = '\0'; // add space for at least one \0
-    while(i & 3) // pad to 4 bytes
-      i++;
-    memcpy(data, &buffer[i], length-i);    
+  int getAddressLength(){
+    // includes 0 padding
+    return types-address;
   }
 
-  int getSize(){
-    int size = 0;
-    while(types[size] != '\0')
+  int getTypeTagLength(){
+    return data-types;
+  }
+
+  int calculateAddressLength(){
+    int size = strnlen((char*)address, end-address)+1;
+    while(size & 0x03)
       size++;
     return size;
   }
 
-  char* getAddress(){
-    return (char*)prefix;
+  int calculateTypeTagLength(){
+    int size = strnlen((char*)types, end-types)+1;
+    while(size & 0x03)
+      size++;
+    return size;
   }
 
-  int8_t getDataSize(char type){
+  int getPrefixLength(){
+    return data-address;
+  }
+
+  int getTotalDataLength(){
+    // todo: 'end' might specify capacity, not end position
+    return end-data;
+  }
+
+  int getMessageLength(){
+    // todo: 'end' might specify capacity, not end position
+    return end-address;
+  }
+
+  int calculateMessageLength(){
+    int size = getPrefixLength();
+    for(int i=0; i<getSize(); ++i)
+      size += getDataSize(i);
+    return size;
+    // return size+calculateDataLength();
+  }
+
+  void setBuffer(uint8_t* buffer, int length){
+    // In a stream-based protocol such as TCP, the stream should begin with an int32 giving the size of the first packet, followed by the contents of the first packet, followed by the size of the second packet, etc.
+    address = buffer;
+    end = buffer+length;
+  }
+
+  // assumes address and end have been set
+  void parse(){
+    // Note: some older implementations of OSC may omit the OSC Type Tag string. Until all such implementations are updated, OSC implementations should be robust in the case of a missing OSC Type Tag String.
+    types = address+calculateAddressLength();
+    // while(*types == '\0' && ++types < end);
+    // while(((uint32_t)types & 0x03) && ++types < end);
+    data = types+calculateTypeTagLength();
+    // while(*data == '/0') && (data & 0x03) && ++data < end);
+    // while(((uint32_t)data & 0x03) && ++data < end);
+  }
+
+  char* getAddress(){
+    return (char*)address;
+  }
+
+  bool matches(const char* pattern){
+    return matches(pattern, strlen(pattern));
+  }
+
+  bool matches(const char* pattern, int length){
+    // return strncmp(address, pattern, length) == 0;
+    // todo: wild cards?
+    return strncasecmp((char*)address, pattern, length) == 0;
+  }
+ 
+  /*
+   * @return number of arguments (data fields) in the message
+   */
+  uint8_t getSize(){
+    uint8_t size = 0;
+    for(int i=1; types && types[i] != '\0' && &types[i] < data; ++i)
+      size++;
+    return size;
+  }
+
+  char getDataType(uint8_t index){
+    return types[index+1]; // the first character is a comma
+  }
+
+  int getDataSize(uint8_t index){
+    char type = getDataType(index);
     switch(type){
     case 'c': // ASCII character sent as 32 bits
     case 'r': // 32bit RGBA colour
@@ -137,217 +129,220 @@ public:
     case 'h': // 64bit integer
     case 'd': // 64bit double
       return 8;
+    case 'b': // blob
+      // first four bytes is the size
+      return *(uint32_t*)getData(index);
     case 's': // string
     case 'S': // symbol
-    case 'b': // blob
-      // todo - but what?!
+      {
+	char* str = (char*)getData(index);
+	int8_t size = strnlen(str, (char*)end-str)+1;
+	while(size & 0x03)
+	  size++;
+	return size;
+      }
     default:
       return 0;
     }
   }
 
-  char getDataType(int8_t index){
-    return types[index];
+  float getAsFloat(uint8_t i){
+    float f;
+    switch(getDataType(i)){
+    case 'f':
+      f = getFloat(i);
+      break;
+    case 'i':
+      f = float(getInt(i));
+      break;
+    case 'd':
+      f = float(getDouble(i));
+      break;
+    case 'h':
+      f = float(getLong(i));
+      break;
+    case 'T':
+      f = 1.0f;
+      break;
+    default:
+      f = 0.0f;
+      break;
+    }
+    return f;
   }
 
-  int getOffset(int8_t index){
-    int offset = 0;
+  bool getAsBool(uint8_t i){
+    bool b;
+    switch(getDataType(i)){
+    case 'f':
+      b = getFloat(i) > 0.5;
+      break;
+    case 'i':
+      b = getInt(i) != 0;
+      break;
+    case 'd':
+      b = getDouble(i) > 0.5;
+      break;
+    case 'h':
+      b = getLong(i) != 0;
+      break;
+    case 'T':
+      b = true;
+      break;
+    default:
+      b = false;
+      break;
+    }
+    return b;
+  }
+
+  void* getData(uint8_t index){
+    uint8_t* ptr = data;
     for(int i=0; i<index; ++i)
-      offset += getDataSize(types[i]);
-    return offset;
+      ptr += getDataSize(i);
+    return ptr;
   }
-
-  static int32_t getOscInt(uint8_t* data){
-    int index = 0;
-    union { int32_t i; uint8_t b[4]; } u;
-    u.b[3] = data[index++];
-    u.b[2] = data[index++];
-    u.b[1] = data[index++];
-    u.b[0] = data[index];
-    return u.i;
-  }
-
 
   int32_t getInt(int8_t index){
-    index = getOffset(index);
-    union { int32_t i; uint8_t b[4]; } u;
-    u.b[3] = data[index++];
-    u.b[2] = data[index++];
-    u.b[1] = data[index++];
-    u.b[0] = data[index];
-    return u.i;
+    return getOscInt32((uint8_t*)getData(index));
   }
 
   float getFloat(int8_t index){
-    index = getOffset(index);
-    union { float f; uint8_t b[4]; } u;
-    u.b[3] = data[index++];
-    u.b[2] = data[index++];
-    u.b[1] = data[index++];
-    u.b[0] = data[index];
-    return u.f;
-    //    return *(float*)getString(index);
-    /*
-    int offset = getOffset(index);
-    union { float f; uint8_t b[4]; } u;
-    memcpy(u.b, &data[offset], 4);    
-    return htonl(u.f);
-    */
-  }
-
-  double getDouble(int8_t index){
-    index = getOffset(index);
-    union { double d; uint8_t b[8]; } u;
-    u.b[7] = data[index++];
-    u.b[6] = data[index++];
-    u.b[5] = data[index++];
-    u.b[4] = data[index++];
-    u.b[3] = data[index++];
-    u.b[2] = data[index++];
-    u.b[1] = data[index++];
-    u.b[0] = data[index];
-    return u.d;
+    return getOscFloat32((uint8_t*)getData(index));
   }
 
   int64_t getLong(int8_t index){
-    index = getOffset(index);
-    union { int64_t i; uint8_t b[8]; } u;
-    u.b[7] = data[index++];
-    u.b[6] = data[index++];
-    u.b[5] = data[index++];
-    u.b[4] = data[index++];
-    u.b[3] = data[index++];
-    u.b[2] = data[index++];
-    u.b[1] = data[index++];
-    u.b[0] = data[index];
-    return u.i;
+    return getOscInt64((uint8_t*)getData(index));
+  }
+
+  double getDouble(int8_t index){
+    return getOscFloat64((uint8_t*)getData(index));
   }
 
   char* getString(int8_t index){
-    int offset = getOffset(index);
-    return (char*)(data+offset);
+    return (char*)getData(index);
   }
 
-  void setAddress(const char* a){
-    prefixLength = strnlen(a, OSC_MESSAGE_MAX_PREFIX_SIZE-5)+1;
-#if 1 // reset prefix and data
-    types = NULL;
-    dataLength = 0;
-#else // copy over
-    if(types != NULL){
-      uint8_t pos = prefixLength;
-      while(pos & 3) pos++; // pad to 4 bytes
-      pos++; // add one for ','
-      int sz = min(sizeof(prefix)-(types-prefix), sizeof(prefix)-pos);
-      memmove(prefix+pos, types, sz-1);
-    }
-#endif
-    //    memset(address, 0, sizeof(address));
-    memcpy(prefix, a, prefixLength);
-    while(prefixLength & 3) // pad to 4 bytes
-      prefix[prefixLength++] = '\0';
-    prefix[prefixLength++] = ',';
-    types = prefix+prefixLength;
+  static int32_t getOscInt32(uint8_t* data){
+    union { int32_t i; uint8_t b[4]; } u;
+    u.b[3] = data[0];
+    u.b[2] = data[1];
+    u.b[1] = data[2];
+    u.b[0] = data[3];
+    return u.i;
   }
 
-  int copy(uint8_t* buf, int buflen){
-    if(buflen < prefixLength)
-      return -1;
-    memcpy(buf, prefix, prefixLength);
-    int len = prefixLength;
-    buf[len++] = '\0';
-    while(len & 3) // pad to 4 bytes
-      buf[len++] = '\0';
-    if(buflen < len+dataLength)
-      return -1;
-    memcpy(buf+len, data, dataLength);
-    len += dataLength;
-    while(len & 3) // pad to 4 bytes
-      buf[len++] = '\0';
-    return len;
+  static float getOscFloat32(uint8_t* data){
+    union { float f; uint8_t b[4]; } u;
+    u.b[3] = data[0];
+    u.b[2] = data[1];
+    u.b[1] = data[2];
+    u.b[0] = data[3];
+    return u.f;
   }
 
-  void write(Print& out){
-    out.write(prefix, prefixLength);
-    // add zero padding
-    switch((prefixLength) & 3){
-    case 0:
-      out.write((uint8_t)'\0');
-    case 1:
-      out.write((uint8_t)'\0');
-    case 2:
-      out.write((uint8_t)'\0');
-    case 3:
-      out.write((uint8_t)'\0');
-    }
-    out.write(data, dataLength);
+  static int64_t getOscInt64(uint8_t* data){
+    union { int64_t i; uint8_t b[8]; } u;
+    u.b[7] = data[0];
+    u.b[6] = data[1];
+    u.b[5] = data[2];
+    u.b[4] = data[3];
+    u.b[3] = data[4];
+    u.b[2] = data[5];
+    u.b[1] = data[6];
+    u.b[0] = data[7];
+    return u.i;
   }
 
-  uint8_t addFloat(float value){
-    return add('f', (uint8_t*)&value);
+  static float getOscFloat64(uint8_t* data){
+    union { double d; uint8_t b[8]; } u;
+    u.b[7] = data[0];
+    u.b[6] = data[1];
+    u.b[5] = data[2];
+    u.b[4] = data[3];
+    u.b[3] = data[4];
+    u.b[2] = data[5];
+    u.b[1] = data[6];
+    u.b[0] = data[7];
+    return u.d;
   }
-  uint8_t addInt(int32_t value){
-    return add('i', (uint8_t*)&value);
+
+  void setPrefix(const char* addr, const char* tags){    
+    // strncpy(address, addr, end-address);
+    // If the length of src is less than n, strncpy() writes additional null
+    // bytes to dest to ensure that a total of n bytes are written.
+    strcpy((char*)address, addr);
+    types = address+calculateAddressLength();
+    // todo: zero-fill
+    // while(((uint32_t)types & 0x03) && types+1 < end)
+    //   *types++ = '\0'; // fill end of address with 0 padding
+    // strncpy(types, tags, end-types);
+    strcpy((char*)types, tags);
+    data = types+calculateTypeTagLength();
+    // while(((uint32_t)data & 0x03) && data+1 < end)
+    //   *data++ = '\0';
+    // todo: zero-fill
   }
-  void addString(){
-    addType('s', 0);
+
+  // void write(Print& out){
+  //   out.write(address, calculateMessageLength());
+  // }
+
+  void setData(int index, void* data, int size){
+    void* ptr = getData(index);
+    memcpy(ptr, data, size);
   }
-  uint8_t addString(const char* str){
-    return addString((uint8_t*)str, strnlen(str, OSC_MESSAGE_MAX_DATA_SIZE-dataLength));
+
+  void setFloat(uint8_t index, float value){
+    // setData(index, &value, 4);
+    set32(index, (uint8_t*)&value);
   }
-  uint8_t addString(uint8_t* value, size_t sz){
-    addType('s', 0);
-    uint8_t index = dataLength;
-    for(size_t i=0; i<sz; ++i)
-      data[dataLength++] = value[i]; // why not backwards?
-      // data[dataLength++] = value[sz-i]; // why backwards?
-    data[dataLength++] = '\0';
-    while(dataLength & 3) // pad to 4 bytes
-      data[dataLength++] = '\0';
-    return index;
+
+  void setInt(uint8_t index, int32_t value){
+    set32(index, (uint8_t*)&value);
   }
+
+  void setDouble(uint8_t index, double value){
+    set64(index, (uint8_t*)&value);
+  }
+
+  void setLong(uint8_t index, int64_t value){
+    set64(index, (uint8_t*)&value);
+  }
+
   void setString(uint8_t index, const char* str){
-    setString(index, (uint8_t*)str, strnlen(str, OSC_MESSAGE_MAX_DATA_SIZE-dataLength));
+    setString(index, str, strlen(str));
   }
-  void setString(uint8_t index, uint8_t* value, size_t sz){
-    dataLength = getOffset(index);
-    for(size_t i=0; i<sz; ++i)
-      data[dataLength++] = value[i];
-      // data[dataLength++] = value[sz-i]; // why backwards?
-    data[dataLength++] = '\0';
-    while(dataLength & 3) // pad to 4 bytes
-      data[dataLength++] = '\0';
+
+  void setString(uint8_t index, const char* str, size_t length){
+    char* ptr = (char*)getData(index);
+    for(int i=0; i<length && ptr < (char*)end-1; ++i)
+      *ptr++ = str[i];
+    do{
+      // pad to 4 bytes
+      *ptr++ = '\0';
+    }while(++length & 0x03);
   }
 
 protected:
-  void addType(char type, size_t size){
-    prefix[prefixLength++] = type;
-    dataLength += size;
+  void set32(uint8_t index, uint8_t* value){
+    uint8_t* ptr = (uint8_t*)getData(index);
+    *ptr++ = value[3];
+    *ptr++ = value[2];
+    *ptr++ = value[1];
+    *ptr++ = value[0];
   }
-  uint8_t add(char type, uint8_t* value){
-    prefix[prefixLength++] = type;
-    data[dataLength++] = value[3];
-    data[dataLength++] = value[2];
-    data[dataLength++] = value[1];
-    data[dataLength++] = value[0];
-    return dataLength-4;
-  }
-public:
-  void setFloat(uint8_t index, float value){
-    set32bits(index, (uint8_t*)&value);
-  }
-  void setInt(uint8_t index, int32_t value){
-    set32bits(index, (uint8_t*)&value);
-  }
-  void set32bits(uint8_t index, uint8_t* value){
-    data[index++] = value[3];
-    data[index++] = value[2];
-    data[index++] = value[1];
-    data[index] = value[0];
-  }
-  void set(uint8_t index, uint8_t* value, size_t sz){
-    for(size_t i=1; i<=sz; ++i)
-      data[index++] = value[sz-i];
+
+  void set64(uint8_t index, uint8_t* value){
+    uint8_t* ptr = (uint8_t*)getData(index);
+    *ptr++ = value[7];
+    *ptr++ = value[6];
+    *ptr++ = value[5];
+    *ptr++ = value[4];
+    *ptr++ = value[3];
+    *ptr++ = value[2];
+    *ptr++ = value[1];
+    *ptr++ = value[0];
   }
 };
 
