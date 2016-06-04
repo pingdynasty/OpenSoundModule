@@ -37,6 +37,36 @@ BOOST_AUTO_TEST_CASE(testSetPrefix){
   BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 20);
 }
 
+BOOST_AUTO_TEST_CASE(testSetAddress){
+  // test changing address after prefix is set
+  uint8_t buffer[64];
+  OscMessage msg(buffer, sizeof(buffer));
+  msg.setPrefix("/fo/ba", ",iffi");
+  BOOST_CHECK_EQUAL(msg.getSize(), 4);
+  BOOST_CHECK_EQUAL(msg.getAddressLength(), 8);
+  BOOST_CHECK_EQUAL(msg.getPrefixLength(), 16);
+  BOOST_CHECK_EQUAL(msg.getBufferSize(), 64);
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 32);
+  msg.setAddress("/fooo/baaa/baaz");
+  BOOST_CHECK_EQUAL(msg.getSize(), 4);
+  BOOST_CHECK_EQUAL(msg.getAddressLength(), 16);
+  BOOST_CHECK_EQUAL(msg.getPrefixLength(), 24);
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 40);
+  BOOST_CHECK_EQUAL(msg.getDataType(0), 'i');
+  BOOST_CHECK_EQUAL(msg.getDataType(1), 'f');
+  BOOST_CHECK_EQUAL(msg.getDataType(2), 'f');
+  BOOST_CHECK_EQUAL(msg.getDataType(3), 'i');  
+  msg.setAddress("/f");
+  BOOST_CHECK_EQUAL(msg.getSize(), 4);
+  BOOST_CHECK_EQUAL(msg.getAddressLength(), 4);
+  BOOST_CHECK_EQUAL(msg.getPrefixLength(), 12);
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 28);
+  BOOST_CHECK_EQUAL(msg.getDataType(0), 'i');
+  BOOST_CHECK_EQUAL(msg.getDataType(1), 'f');
+  BOOST_CHECK_EQUAL(msg.getDataType(2), 'f');
+  BOOST_CHECK_EQUAL(msg.getDataType(3), 'i');  
+}
+
 BOOST_AUTO_TEST_CASE(testParse){
   char data[] = "/foo/bar/\0\0\0,i\0\0\0\0\0\120";
   OscMessage msg;
