@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(testDefaults){
   OscMessage msg;
   BOOST_CHECK_EQUAL(msg.getSize(), 0);
   BOOST_CHECK_EQUAL(msg.getPrefixLength(), 0);
-  BOOST_CHECK_EQUAL(msg.getMessageLength(), 0);
+  BOOST_CHECK_EQUAL(msg.getBufferSize(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(testSetPrefix){
@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(testSetPrefix){
   BOOST_CHECK_EQUAL(msg.getSize(), 1);
   BOOST_CHECK_EQUAL(msg.getAddressLength(), 12);
   BOOST_CHECK_EQUAL(msg.getPrefixLength(), 16);
-  BOOST_CHECK_EQUAL(msg.getMessageLength(), 64);
+  BOOST_CHECK_EQUAL(msg.getBufferSize(), 64);
   BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 20);
 }
 
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(testParse){
   BOOST_CHECK_EQUAL(msg.getSize(), 1);
   BOOST_CHECK_EQUAL(msg.getAddressLength(), 12);
   BOOST_CHECK_EQUAL(msg.getPrefixLength(), 16);
-  BOOST_CHECK_EQUAL(msg.getMessageLength(), sizeof(data));
+  BOOST_CHECK_EQUAL(msg.getBufferSize(), sizeof(data));
   BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 20);
   BOOST_CHECK_EQUAL(msg.getDataType(0), 'i');
   BOOST_CHECK_EQUAL(msg.getInt(0), 80);
@@ -55,7 +55,34 @@ BOOST_AUTO_TEST_CASE(testStrings){
   BOOST_CHECK_EQUAL(msg.getAddressLength(), 8);
 }
 
-BOOST_AUTO_TEST_CASE(testSetFloatData){
+BOOST_AUTO_TEST_CASE(testSetInt){
+  uint8_t buffer[64];
+  OscMessage msg(buffer, sizeof(buffer));
+  msg.setPrefix("/yo/yo", ",iii");
+  BOOST_CHECK_EQUAL(msg.getAddressLength(), 8);
+  BOOST_CHECK_EQUAL(msg.getPrefixLength(), 16);
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 28);
+  msg.setInt(0, 43214312);
+  msg.setInt(1, -999);
+  msg.setInt(2, 0);
+  BOOST_CHECK_EQUAL(msg.getInt(0), 43214312);
+  BOOST_CHECK_EQUAL(msg.getAsBool(0), true);
+  BOOST_CHECK_EQUAL(msg.getAsInt(0), 43214312);
+  BOOST_CHECK_CLOSE(msg.getAsFloat(0), 43214312.0f, FLOAT_TEST_TOLERANCE);
+  BOOST_CHECK_EQUAL(msg.getInt(1), -999);
+  BOOST_CHECK_EQUAL(msg.getAsBool(1), true);
+  BOOST_CHECK_EQUAL(msg.getAsInt(1), -999);
+  BOOST_CHECK_CLOSE(msg.getAsFloat(1), -999.0f, FLOAT_TEST_TOLERANCE);
+  BOOST_CHECK_EQUAL(msg.getInt(2), 0);
+  BOOST_CHECK_EQUAL(msg.getAsBool(2), false);
+  BOOST_CHECK_EQUAL(msg.getAsInt(2), 0);
+  BOOST_CHECK_CLOSE(msg.getAsFloat(2), 0.0f, FLOAT_TEST_TOLERANCE);
+  msg.setInt(2, 54235432);
+  BOOST_CHECK_EQUAL(msg.getAsBool(2), true);
+  BOOST_CHECK_EQUAL(msg.getInt(2), 54235432);
+}
+
+BOOST_AUTO_TEST_CASE(testSetFloat){
   uint8_t buffer[64];
   OscMessage msg(buffer, sizeof(buffer));
   msg.setPrefix("/yoyo", ",ff");
@@ -66,7 +93,30 @@ BOOST_AUTO_TEST_CASE(testSetFloatData){
   msg.setFloat(0, 9786.6789);
   BOOST_CHECK_CLOSE(msg.getFloat(1), -43120.43210, FLOAT_TEST_TOLERANCE);
   BOOST_CHECK_CLOSE(msg.getFloat(0), 9786.6789, FLOAT_TEST_TOLERANCE);
+  BOOST_CHECK_EQUAL(msg.getAsInt(0), 9786);
+  BOOST_CHECK_EQUAL(msg.getAsInt(1), -43120);
+  BOOST_CHECK_EQUAL(msg.getAsBool(0), true);
+  msg.setFloat(0, 0.0f);
+  BOOST_CHECK_EQUAL(msg.getAsInt(0), 0);
+  BOOST_CHECK_EQUAL(msg.getAsFloat(0), 0);
+  BOOST_CHECK_EQUAL(msg.getAsBool(0), false);
+}
 
+BOOST_AUTO_TEST_CASE(testSetBool){
+  uint8_t buffer[64];
+  OscMessage msg(buffer, sizeof(buffer));
+  msg.setPrefix("/yo", ",TF");
+  BOOST_CHECK_EQUAL(msg.getAddressLength(), 4);
+  BOOST_CHECK_EQUAL(msg.getPrefixLength(), 8);
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 8);
+  BOOST_CHECK_EQUAL(msg.getBool(0), true);
+  BOOST_CHECK_EQUAL(msg.getAsBool(0), true);
+  BOOST_CHECK_EQUAL(msg.getAsInt(0), 1);
+  BOOST_CHECK_EQUAL(msg.getAsFloat(0), 1.0f);
+  BOOST_CHECK_EQUAL(msg.getBool(1), false);
+  BOOST_CHECK_EQUAL(msg.getAsBool(1), false);
+  BOOST_CHECK_EQUAL(msg.getAsInt(1), 0);
+  BOOST_CHECK_EQUAL(msg.getAsFloat(1), 0.0f);
 }
 
 BOOST_AUTO_TEST_CASE(testExample1){
@@ -89,9 +139,9 @@ by the following 32-byte message:
     0x74, 0x6f, 0x72, 0x2f,
     0x34, 0x2f, 0x66, 0x72,
     0x65, 0x71, 0x75, 0x65,
-    0x6e, 0x63, 0x79, 0x0,
-    0x2c, 0x66, 0x0, 0x0,
-    0x43, 0xdc, 0x0, 0x0    
+    0x6e, 0x63, 0x79, 0x00,
+    0x2c, 0x66, 0x00, 0x00,
+    0x43, 0xdc, 0x00, 0x00    
   };
   OscMessage msg(buffer, sizeof(buffer));
   msg.parse();
@@ -99,6 +149,9 @@ by the following 32-byte message:
   BOOST_CHECK_EQUAL(msg.calculateMessageLength(), sizeof(buffer));
   BOOST_CHECK_EQUAL(msg.getDataType(0), 'f');
   BOOST_CHECK_EQUAL(msg.getFloat(0), 440.0);
+  BOOST_CHECK_EQUAL(msg.getAsFloat(0), 440.0);
+  BOOST_CHECK_EQUAL(msg.getAsInt(0), 440);
+  BOOST_CHECK_EQUAL(msg.getAsBool(0), true);
   BOOST_CHECK(strcmp(msg.getAddress(), "/oscillator/4/frequency") == 0);
   BOOST_CHECK(msg.matches("/oscillator/4/frequency"));
 }
@@ -128,13 +181,13 @@ The float32 5.678
 */
   uint8_t buffer[] = {
     0x2f, 0x66, 0x6f, 0x6f,
-    0x0, 0x0, 0x0, 0x0,
+    0x00, 0x00, 0x00, 0x00,
     0x2c, 0x69, 0x69, 0x73,
-    0x66, 0x66, 0x0, 0x0,
-    0x0, 0x0, 0x3, 0xe8,
+    0x66, 0x66, 0x00, 0x00,
+    0x00, 0x00, 0x03, 0xe8,
     0xff, 0xff, 0xff, 0xff,
     0x68, 0x65, 0x6c, 0x6c,
-    0x6f, 0x0, 0x0, 0x0,
+    0x6f, 0x00, 0x00, 0x00,
     0x3f, 0x9d, 0xf3, 0xb6,
     0x40, 0xb5, 0xb2, 0x2d
   };
@@ -144,6 +197,9 @@ The float32 5.678
   BOOST_CHECK_EQUAL(msg.calculateMessageLength(), sizeof(buffer));
   BOOST_CHECK_EQUAL(msg.getDataType(0), 'i');
   BOOST_CHECK_EQUAL(msg.getInt(0), 1000);
+  BOOST_CHECK_EQUAL(msg.getAsFloat(0), 1000.0f);
+  BOOST_CHECK_EQUAL(msg.getAsInt(0), 1000);
+  BOOST_CHECK_EQUAL(msg.getAsBool(0), true);
   BOOST_CHECK_EQUAL(msg.getDataType(1), 'i');
   BOOST_CHECK_EQUAL(msg.getInt(1), -1);
   BOOST_CHECK_EQUAL(msg.getDataType(2), 's');

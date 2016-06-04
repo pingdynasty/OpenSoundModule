@@ -54,11 +54,6 @@ public:
     return data-address;
   }
 
-  int getMessageLength(){
-    // todo: 'end' might specify capacity, not end position
-    return end-address;
-  }
-
   int calculateMessageLength(){
     int size = getPrefixLength();
     for(int i=0; i<getSize(); ++i)
@@ -69,6 +64,11 @@ public:
 
   uint8_t* getBuffer(){
     return address;
+  }
+
+  int getBufferSize(){
+    // todo: 'end' specifies capacity, not end position
+    return end-address;
   }
 
   void setBuffer(void* buffer, int length){
@@ -146,53 +146,78 @@ public:
   }
 
   float getAsFloat(uint8_t i){
-    float f;
+    float value;
     switch(getDataType(i)){
     case 'f':
-      f = getFloat(i);
+      value = getFloat(i);
       break;
     case 'i':
-      f = float(getInt(i));
+      value = float(getInt(i));
       break;
     case 'd':
-      f = float(getDouble(i));
+      value = float(getDouble(i));
       break;
     case 'h':
-      f = float(getLong(i));
+      value = float(getLong(i));
       break;
     case 'T':
-      f = 1.0f;
+      value = 1.0f;
       break;
     default:
-      f = 0.0f;
+      value = 0.0f;
       break;
     }
-    return f;
+    return value;
+  }
+
+  float getAsInt(uint8_t i){
+    int value;
+    switch(getDataType(i)){
+    case 'f':
+      value = int(getFloat(i));
+      break;
+    case 'i':
+      value = getInt(i);
+      break;
+    case 'd':
+      value = int(getDouble(i));
+      break;
+    case 'h':
+      value = int(getLong(i));
+      break;
+    case 'T':
+      value = 1;
+      break;
+    default:
+      value = 0;
+      break;
+    }
+    return value;
   }
 
   bool getAsBool(uint8_t i){
-    bool b;
+    bool value;
     switch(getDataType(i)){
     case 'f':
-      b = getFloat(i) > 0.5;
+      value = getFloat(i) > 0.5;
       break;
     case 'i':
-      b = getInt(i) != 0;
+      value = getInt(i) != 0;
       break;
     case 'd':
-      b = getDouble(i) > 0.5;
+      value = getDouble(i) > 0.5;
       break;
     case 'h':
-      b = getLong(i) != 0;
+      value = getLong(i) != 0;
       break;
     case 'T':
-      b = true;
+      value = true;
       break;
     default:
-      b = false;
+      value = false;
       break;
     }
-    return b;
+    return value;
   }
 
   void* getData(uint8_t index){
@@ -295,6 +320,19 @@ public:
   void setFloat(uint8_t index, float value){
     // setData(index, &value, 4);
     set32(index, (uint8_t*)&value);
+  }
+
+  /* get a T or F (true or false) from the type tags */
+  bool getBool(uint8_t index){
+    return types[index+1] == 'T';
+  }
+
+  /* set a T or F (true or false) in the type tags */
+  void setBool(uint8_t index, bool value){
+    if(value)
+      types[index+1] = 'T';
+    else
+      types[index+1] = 'F';
   }
 
   void setInt(uint8_t index, int32_t value){
