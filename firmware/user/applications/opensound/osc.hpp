@@ -22,7 +22,7 @@ void broadcastStatus(){
   oscserver.setBroadcastMode(true);
   IPAddress ip = WiFi.localIP();
   char buf[24];
-  sprintf(buf, "%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], networkSettings.localPort);
+  sprintf(buf, "%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], settings.localPort);
   sendOscStatus(buf);
   oscserver.setBroadcastMode(broadcast);
 }
@@ -44,15 +44,15 @@ void oscLed(OscServer& server, OscMessage& msg){
 }
 
 uint16_t scaleInputValue(int def, float value){
-  value = (value - rangeSettings.min[def])/(rangeSettings.max[def] - rangeSettings.min[def]);
+  value = (value - settings.min[def])/(settings.max[def] - settings.min[def]);
   return MIN(MAX(int(4095.0f*value), 0), 4095);
 }
 
 float scaleOutputValue(int def, uint16_t value){
   float out = value/4095.0f;
-  out = out*(rangeSettings.max[def] - rangeSettings.min[def]) + rangeSettings.min[def];
+  out = out*(settings.max[def] - settings.min[def]) + settings.min[def];
   return out;
-//  return MIN(MAX(out, rangeSettings.min[def]), rangeSettings.max[def]);
+//  return MIN(MAX(out, settings.min[def]), settings.max[def]);
 }
 
 void oscCv(OscServer& server, OscMessage& msg){
@@ -110,11 +110,11 @@ void sendTriggerB(bool value){
 void configureOsc(){
   oscsender.init();
   oscserver.init();
-  oscserver.addCommand(addressSettings.inputAddress[0], &oscStatus);
-  oscserver.addCommand(addressSettings.inputAddress[1], &oscCvA, 1);
-  oscserver.addCommand(addressSettings.inputAddress[2], &oscCvB, 1);
-  oscserver.addCommand(addressSettings.inputAddress[3], &oscTriggerA);
-  oscserver.addCommand(addressSettings.inputAddress[4], &oscTriggerB);
+  oscserver.addCommand(settings.inputAddress[0], &oscStatus);
+  oscserver.addCommand(settings.inputAddress[1], &oscCvA, 1);
+  oscserver.addCommand(settings.inputAddress[2], &oscCvB, 1);
+  oscserver.addCommand(settings.inputAddress[3], &oscTriggerA);
+  oscserver.addCommand(settings.inputAddress[4], &oscTriggerB);
   oscserver.addCommand("/osm/cv", &oscCv, 2);
   oscserver.addCommand("/osm/led", &oscLed);
 }

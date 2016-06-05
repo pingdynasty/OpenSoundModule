@@ -11,11 +11,11 @@ OscSender::OscSender(){
 void OscSender::init(){
   for(int i=0; i<OSC_MESSAGE_COUNT; ++i)
     messages[i].setBuffer(buffer+i*OSC_MESSAGE_SIZE, OSC_MESSAGE_SIZE);
-  messages[STATUS].setPrefix(addressSettings.outputAddress[0], ",s");
-  messages[CV_A].setPrefix(addressSettings.outputAddress[1], ",f");
-  messages[CV_B].setPrefix(addressSettings.outputAddress[2], ",f");
-  messages[TRIGGER_A].setPrefix(addressSettings.outputAddress[3], ",i");
-  messages[TRIGGER_B].setPrefix(addressSettings.outputAddress[4], ",i");
+  messages[STATUS].setPrefix(settings.outputAddress[0], ",s");
+  messages[CV_A].setPrefix(settings.outputAddress[1], ",f");
+  messages[CV_B].setPrefix(settings.outputAddress[2], ",f");
+  messages[TRIGGER_A].setPrefix(settings.outputAddress[3], ",i");
+  messages[TRIGGER_B].setPrefix(settings.outputAddress[4], ",i");
 }
 
 

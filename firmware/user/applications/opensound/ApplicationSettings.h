@@ -5,43 +5,52 @@
 /* #include "application.h" */
 #include "opensound.h"
 
-#define NETWORK_SETTINGS_ADDRESS 0
-#define ADDRESS_SETTINGS_ADDRESS 64
-#define RANGE_SETTINGS_ADDRESS   128
+#define APPLICATION_SETTINGS_ADDRESS 0
 /* The photon has 2048 bytes of emulated EEPROM. */
 
-template<int address>
+#define CV_A_IN  0
+#define CV_B_IN  1
+#define CV_A_OUT 2
+#define CV_B_OUT 3
+
 class ApplicationSettings {
 private:
-  uint32_t checksum;
+  uint8_t checksum; // must be first in struct
+  /* the idea is that if anything is added or removed from this class then
+     the checksum changes, preventing a corrupted read-back. */
 public:
-  virtual void reset() = 0;
+  void reset();
   void init(){
-    checksum = sizeof(*this) ^ 0xffffffff;
+    checksum = (uint8_t)sizeof(*this) ^ 0xff;
     if(settingsInFlash())
       loadFromFlash();
     else
       reset();
   }
   bool settingsInFlash(){
-    uint32_t verify = EEPROM.read(address) << 24;
-    verify |= EEPROM.read(address+1) << 16;
-    verify |= EEPROM.read(address+2) << 8;
-    verify |= EEPROM.read(address+3);
-    return EEPROM.read(address) == checksum;
+    return EEPROM.read(APPLICATION_SETTINGS_ADDRESS) == checksum;
+  }
+  bool equals(const ApplicationSettings& other){
+    return memcmp(this, &other, sizeof(*this)) == 0;
+  }
+  bool hasChanged(){
+    if(settingsInFlash()){
+      ApplicationSettings other;
+      other.init();
+      if(equals(other))
+	return false;
+    }
+    return true;
   }
   void loadFromFlash(){
-    EEPROM.get(address, *this);
+    EEPROM.get(APPLICATION_SETTINGS_ADDRESS, *this);
   }
   void saveToFlash(){
-    EEPROM.put(address, *this);
+    EEPROM.put(APPLICATION_SETTINGS_ADDRESS, *this);
   }
   void clearFlash(){
-    EEPROM.write(address, 0x00);
+    EEPROM.write(APPLICATION_SETTINGS_ADDRESS, 0x00);
   }
-};
-
-class NetworkSettings : public ApplicationSettings<NETWORK_SETTINGS_ADDRESS> {
 public:
   int localPort;
   int remotePort;
@@ -49,52 +58,12 @@ public:
   bool autoremote;
   IPAddress remoteIPAddress;
 public:
-  void reset();
-  bool equals(const NetworkSettings& other){
-    return memcmp(this, &other, sizeof(*this)) == 0;
-  }
-  bool hasChanged(){
-    if(settingsInFlash()){
-      NetworkSettings other;
-      other.init();
-      if(equals(other))
-	return false;
-    }
-    return true;
-  }
-};
-
-class AddressSettings : public ApplicationSettings<ADDRESS_SETTINGS_ADDRESS> {
-public:
   // todo: let char* live in OscSender.messages
   // to read, write, compare flash load to/from messages
   /* char inputAddress[5][OSC_ADDRESS_MAX_LEN]; */
   /* char outputAddress[5][OSC_ADDRESS_MAX_LEN]; */
   char inputAddress[OSC_MESSAGE_COUNT][OSC_ADDRESS_MAX_LEN+1];
   char outputAddress[OSC_MESSAGE_COUNT][OSC_ADDRESS_MAX_LEN+1];
-public:
-  void reset();
-  bool equals(const AddressSettings& other){
-    return memcmp(this, &other, sizeof(*this)) == 0;
-    /* bool same = true; */
-    /* for(int i=0; i<OSC_MESSAGE_COUNT; ++i){ */
-    /*   if(strcmp(getInputAddress(i), other.getInputAddress(i)) != 0) */
-    /* 	same = false; */
-    /*   if(strcmp(getOutputAddress(i), other.getOutputAddress(i)) != 0) */
-    /* 	 same = false; */
-    /* } */
-    /* return same; */
-    /* /\* return memcmp(this, &other, sizeof(*this)) == 0; *\/ */
-  }
-  bool hasChanged(){
-    if(settingsInFlash()){
-      AddressSettings other;
-      other.init();
-      if(equals(other))
-	return false;
-    }
-    return true;
-  }
   const char* getInputAddress(int i){
     return inputAddress[i];
   }
@@ -109,36 +78,11 @@ public:
     strncpy(outputAddress[i], address, OSC_ADDRESS_MAX_LEN);
     /* outputAddress[i][OSC_ADDRESS_MAX_LEN] = '\0'; */
   }
-};
 
-#define CV_A_IN  0
-#define CV_B_IN  1
-#define CV_A_OUT 2
-#define CV_B_OUT 3
-
-class RangeSettings : public ApplicationSettings<RANGE_SETTINGS_ADDRESS> {
-public:
   float min[4];
   float max[4];
-
-public:
-  void reset();
-  bool equals(const RangeSettings& other){
-    return memcmp(this, &other, sizeof(*this)) == 0;
-  }
-  bool hasChanged(){
-    if(settingsInFlash()){
-      RangeSettings other;
-      other.init();
-      if(equals(other))
-	return false;
-    }
-    return true;
-  }
 };
 
-extern NetworkSettings networkSettings;
-extern AddressSettings addressSettings;
-extern RangeSettings rangeSettings;
+extern ApplicationSettings settings;
 
 #endif // __ApplicationSettings_H__

@@ -40,15 +40,15 @@ int32_t process_status(const char* url, wiced_http_response_stream_t* s, void* a
 	 << "<p>RSSI: " << WiFi.RSSI() << "</p>"
 	 << "<p>Local IP: " << WiFi.localIP() << "</p>"
     */
-	 << "<p>Local Port: " << networkSettings.localPort << "</p>"
+	 << "<p>Local Port: " << settings.localPort << "</p>"
 	 << "<p>Remote IP: ";
-  if(networkSettings.autoremote)
+  if(settings.autoremote)
     stream << "auto</p>";
-  else if(networkSettings.broadcast)
+  else if(settings.broadcast)
     stream << "broadcast</p>";
   else 
-    stream << networkSettings.remoteIPAddress << "</p>";
-  stream << "<p>Remote Port: " << networkSettings.remotePort << "</p>"
+    stream << settings.remoteIPAddress << "</p>";
+  stream << "<p>Remote Port: " << settings.remotePort << "</p>"
 	 << "<p>MAC Address: ";
   connection.printMacAddress(stream);
   stream << "</p><p>ID: " << Particle.deviceID() << "</p>";
@@ -77,12 +77,12 @@ int32_t process_settings(const char* u, wiced_http_response_stream_t* s, void* a
   bool updated = false;
   const char* param = url.getParameter("localport");
   if(param != NULL){
-    networkSettings.localPort = atol(param);
+    settings.localPort = atol(param);
     updated = true;
   }
   param = url.getParameter("remoteport");
   if(param != NULL){
-    networkSettings.remotePort = atol(param);
+    settings.remotePort = atol(param);
     updated = true;
   }
   param = url.getParameter("remoteip");
@@ -95,23 +95,23 @@ int32_t process_settings(const char* u, wiced_http_response_stream_t* s, void* a
 	 << "<form action='/settings' method='GET'>"
 	 << "<p>Local IP</p><p>" << connection.getLocalIPAddress() << "</p>"
 	 << "<p>Local Port</p><input type='text' name='localport' value='"
-	 << networkSettings.localPort << "'><br>"	 
+	 << settings.localPort << "'><br>"	 
     	 << "<p>Remote IP</p><input type='text' name='remoteip' value='";
-  if(networkSettings.autoremote)
+  if(settings.autoremote)
     stream << "auto'><br>";
-  else if(networkSettings.broadcast)
+  else if(settings.broadcast)
     stream << "broadcast'><br>";
   else 
-    stream << networkSettings.remoteIPAddress << "'><br>";
+    stream << settings.remoteIPAddress << "'><br>";
   stream << "<p>Remote Port</p><input type='text' name='remoteport' value='"
-	 << networkSettings.remotePort << "'><br>"
+	 << settings.remotePort << "'><br>"
 	 << "<button type='submit'>Update</button></form>";
   if(updated){
     stream << "<h3>Settings updated</h3>";
     reload();
   }
-  if(networkSettings.hasChanged())
-    stream << "<br><button onclick='location.href=\"/save_net\"'>Store Settings</button>";
+  if(settings.hasChanged())
+    stream << "<br><button onclick='location.href=\"/save\"'>Store Settings</button>";
   stream << "<br><button onclick='location.href=\"/reset0\"'>Reset Settings</button>";
   stream << OSM_BACK << OSM_END;
   return 0;
@@ -126,36 +126,36 @@ int32_t process_ranges(const char* u, wiced_http_response_stream_t* s, void* arg
     char* param = url.getParameter(&mins[i], 1);
     if(param != NULL){
       debug << "setting input min [" << i << "] to value [" << param << "]\r\n";
-      rangeSettings.min[i] = atof(param);
+      settings.min[i] = atof(param);
       updated = true;
     } 
     param = url.getParameter(&maxs[i], 1);
     if(param != NULL){
       debug << "setting input max [" << i << "] to value [" << param << "]\r\n";
-      rangeSettings.max[i] = atof(param);
+      settings.max[i] = atof(param);
       updated = true;
     }
   }
   Streamer stream(s);
   stream << OSM_BEGIN << "<h1>Value Ranges</h1><form action='/ranges' method='GET'>";
   stream << "<h2>Input</h2>"
-	 << "<p>CV A Min</p><input type='text' name='0' value='" << rangeSettings.min[CV_A_IN] << "'><br>"
-	 << "<p>CV A Max</p><input type='text' name='4' value='" << rangeSettings.max[CV_A_IN] << "'><br>"
-	 << "<p>CV B Min</p><input type='text' name='1' value='" << rangeSettings.min[CV_B_IN] << "'><br>"
-	 << "<p>CV B Max</p><input type='text' name='5' value='" << rangeSettings.max[CV_B_IN] << "'><br>"
+	 << "<p>CV A Min</p><input type='text' name='0' value='" << settings.min[CV_A_IN] << "'><br>"
+	 << "<p>CV A Max</p><input type='text' name='4' value='" << settings.max[CV_A_IN] << "'><br>"
+	 << "<p>CV B Min</p><input type='text' name='1' value='" << settings.min[CV_B_IN] << "'><br>"
+	 << "<p>CV B Max</p><input type='text' name='5' value='" << settings.max[CV_B_IN] << "'><br>"
 	 << "<h2>Output</h2>"
-	 << "<p>CV A Min</p><input type='text' name='2' value='" << rangeSettings.min[CV_A_OUT] << "'><br>"
-	 << "<p>CV A Max</p><input type='text' name='6' value='" << rangeSettings.max[CV_A_OUT] << "'><br>"
-	 << "<p>CV B Min</p><input type='text' name='3' value='" << rangeSettings.min[CV_B_OUT] << "'><br>"
-	 << "<p>CV B Max</p><input type='text' name='7' value='" << rangeSettings.max[CV_B_OUT] << "'><br>"
+	 << "<p>CV A Min</p><input type='text' name='2' value='" << settings.min[CV_A_OUT] << "'><br>"
+	 << "<p>CV A Max</p><input type='text' name='6' value='" << settings.max[CV_A_OUT] << "'><br>"
+	 << "<p>CV B Min</p><input type='text' name='3' value='" << settings.min[CV_B_OUT] << "'><br>"
+	 << "<p>CV B Max</p><input type='text' name='7' value='" << settings.max[CV_B_OUT] << "'><br>"
 	 << "<button type='submit'>Update</button></form>";
   if(updated){
     stream << "<h3>Settings updated</h3>";
     reload();
   }
-  if(rangeSettings.hasChanged())
-    stream << "<br><button onclick='location.href=\"/save_range\"'>Store Settings</button>";
-  stream << "<br><button onclick='location.href=\"/reset3\"'>Reset Settings</button>";
+  if(settings.hasChanged())
+    stream << "<br><button onclick='location.href=\"/save\"'>Store Settings</button>";
+  stream << "<br><button onclick='location.href=\"/reset0\"'>Reset Settings</button>";
   stream << OSM_BACK << OSM_END;
   return 0;
 }
@@ -169,38 +169,38 @@ int32_t process_address(const char* u, wiced_http_response_stream_t* s, void* ar
     char* param = url.getParameter(&inputs[i], 1);
     if(param != NULL){
       debug << "setting input address [" << i << "] to value [" << param << "]\r\n";
-      addressSettings.setInputAddress(i, param);
+      settings.setInputAddress(i, param);
       updated = true;
     }
     param = url.getParameter(&outputs[i], 1);
     if(param != NULL){
       debug << "setting output address [" << i << "] to value [" << param << "]\r\n";
-      addressSettings.setOutputAddress(i, param);
+      settings.setOutputAddress(i, param);
       updated = true;
     }
   }
   Streamer stream(s);
   stream << OSM_BEGIN << "<h1>Address Mapping</h1><form action='/address' method='GET'>";
   stream << "<h2>Receive</h2>"
-	 << "<p>Status</p><input type='text' name='0' value='" << addressSettings.getInputAddress(0) << "'><br>"
-	 << "<p>CV A</p><input type='text' name='1' value='" << addressSettings.getInputAddress(1) << "'><br>"
-	 << "<p>CV B</p><input type='text' name='2' value='" << addressSettings.getInputAddress(2) << "'><br>"
-	 << "<p>Trigger A</p><input type='text' name='3' value='" << addressSettings.getInputAddress(3) << "'><br>"
-	 << "<p>Trigger B</p><input type='text' name='4' value='" << addressSettings.getInputAddress(4) << "'><br>";
+	 << "<p>Status</p><input type='text' name='0' value='" << settings.getInputAddress(0) << "'><br>"
+	 << "<p>CV A</p><input type='text' name='1' value='" << settings.getInputAddress(1) << "'><br>"
+	 << "<p>CV B</p><input type='text' name='2' value='" << settings.getInputAddress(2) << "'><br>"
+	 << "<p>Trigger A</p><input type='text' name='3' value='" << settings.getInputAddress(3) << "'><br>"
+	 << "<p>Trigger B</p><input type='text' name='4' value='" << settings.getInputAddress(4) << "'><br>";
   stream << "<h2>Send</h2>"
-	 << "<p>Status</p><input type='text' name='5' value='" << addressSettings.getOutputAddress(0) << "'><br>"
-	 << "<p>CV A</p><input type='text' name='6' value='" << addressSettings.getOutputAddress(1) << "'><br>"
-	 << "<p>CV B</p><input type='text' name='7' value='" << addressSettings.getOutputAddress(2) << "'><br>"
-	 << "<p>Trigger A</p><input type='text' name='8' value='" << addressSettings.getOutputAddress(3) << "'><br>"
-	 << "<p>Trigger B</p><input type='text' name='9' value='" << addressSettings.getOutputAddress(4) << "'><br>"
+	 << "<p>Status</p><input type='text' name='5' value='" << settings.getOutputAddress(0) << "'><br>"
+	 << "<p>CV A</p><input type='text' name='6' value='" << settings.getOutputAddress(1) << "'><br>"
+	 << "<p>CV B</p><input type='text' name='7' value='" << settings.getOutputAddress(2) << "'><br>"
+	 << "<p>Trigger A</p><input type='text' name='8' value='" << settings.getOutputAddress(3) << "'><br>"
+	 << "<p>Trigger B</p><input type='text' name='9' value='" << settings.getOutputAddress(4) << "'><br>"
 	 << "<button type='submit'>Update</button></form>";
   if(updated){
     stream << "<h3>Settings updated</h3>";
     reload();
   }
-  if(addressSettings.hasChanged())
-    stream << "<br><button onclick='location.href=\"/save_osc\"'>Store Settings</button>";
-  stream << "<br><button onclick='location.href=\"/reset1\"'>Reset Settings</button>";
+  if(settings.hasChanged())
+    stream << "<br><button onclick='location.href=\"/save\"'>Store Settings</button>";
+  stream << "<br><button onclick='location.href=\"/reset0\"'>Reset Settings</button>";
   stream << OSM_BACK << OSM_END;
   return 0;
 }
@@ -252,17 +252,7 @@ int32_t process_reconnect(const char* url, wiced_http_response_stream_t* s, void
 }
 
 int32_t process_save(const char* url, wiced_http_response_stream_t* s, void* arg, wiced_http_message_body_t* body){
-  switch((int)arg){
-  case 1:
-    networkSettings.saveToFlash();
-    break;
-  case 2:
-    addressSettings.saveToFlash();
-    break;
-  case 3:
-    rangeSettings.saveToFlash();
-    break;
-  }
+  settings.saveToFlash();
   Streamer stream(s);
   stream << OSM_BEGIN;
   stream << "<h1>Saved Settings</h1><p>Device settings saved to flash</p>";
@@ -279,25 +269,13 @@ int32_t process_reset(const char* u, wiced_http_response_stream_t* s, void* arg,
   if(param != NULL){
     switch(idx){
     case 0:
-      networkSettings.reset();
-      //      networkSettings.clearFlash();
-      stream << "<p>Network settings reset to factory defaults</p>";
-      reload();
-      break;
-    case 1:
-      addressSettings.reset();
-      //      addressSettings.clearFlash();
-      stream << "<p>OSC address mappings reset to factory defaults</p>";
+      settings.reset();
+      stream << "<p>Settings reset to factory defaults</p>";
       reload();
       break;
     case 2:
       connection.clearCredentials();
       stream << "<p>WiFi credentials purged</p>";
-      break;
-    case 3:
-      rangeSettings.reset();
-      //      rangeSettings.clearFlash();
-      stream << "<p>Value ranges reset to factory defaults</p>";
       break;
     case 99:
       factoryReset();

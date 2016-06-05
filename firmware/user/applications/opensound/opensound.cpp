@@ -55,7 +55,7 @@ void printInfo(Print& out){
   out.print("RSSI: "); 
   out.println(connection.getRSSI());
   out.print("Local port: "); 
-  out.println(networkSettings.localPort);
+  out.println(settings.localPort);
   out.print("Remote IP: "); 
   out.println(oscserver.remoteIP());
   out.print("Remote Port: "); 
@@ -123,7 +123,7 @@ void setRemoteIpAddress(const char* address){
     idx = ip.indexOf('.', pos);
   }
   oscserver.remoteIPAddress[3] = ip.substring(pos).toInt();
-  networkSettings.remoteIPAddress = oscserver.remoteIPAddress;
+  settings.remoteIPAddress = oscserver.remoteIPAddress;
 #ifdef SERIAL_DEBUG
   Serial.print("Remote IP: ");
   Serial.println(oscserver.remoteIPAddress);
@@ -147,7 +147,7 @@ void startServers(){
   else
     debugMessage("webserver fail");
   debugMessage("oscserver.begin");
-  success = oscserver.begin(networkSettings.localPort);
+  success = oscserver.begin(settings.localPort);
   if(success)
     debugMessage("oscserver success");
   else
@@ -279,9 +279,7 @@ void setup(){
   debugMessage("Serial.begin");
 #endif
 
-  networkSettings.init();
-  addressSettings.init();
-  rangeSettings.init();
+  settings.init();
 
   dac_init();
   debugMessage("dac init");
@@ -309,7 +307,7 @@ void setup(){
   const char* hostname = getDeviceName();
   if(hostname == NULL)
     hostname = OSM_AP_HOSTNAME;
-  uint16_t port = networkSettings.localPort;
+  uint16_t port = settings.localPort;
   mdns.setHostname("osm");
   mdns.setService("udp", "osc", port, hostname);
   // success &= mdns.addTXTEntry("port", "1");
@@ -395,27 +393,17 @@ void process(){
 void reload(){
   oscserver.stop();
   configureOsc();
-  oscserver.begin(networkSettings.localPort);
+  oscserver.begin(settings.localPort);
 }
 
 void factoryReset(){
 #ifdef SERIAL_DEBUG
-  if(networkSettings.settingsInFlash())
-    debugMessage("networkSettings in flash");
-  if(addressSettings.settingsInFlash())
-    debugMessage("addressSettings in flash");
-  if(rangeSettings.settingsInFlash())
-    debugMessage("rangeSettings in flash");
+  if(settings.settingsInFlash())
+    debugMessage("settings in flash");
 #endif
-  networkSettings.reset();
-  if(networkSettings.settingsInFlash())
-    networkSettings.clearFlash();
-  addressSettings.reset();
-  if(addressSettings.settingsInFlash())
-    addressSettings.clearFlash();
-  rangeSettings.reset();
-  if(rangeSettings.settingsInFlash())
-    rangeSettings.clearFlash();
+  settings.reset();
+  if(settings.settingsInFlash())
+    settings.clearFlash();
   if(connection.hasCredentials())
     connection.clearCredentials();
   connection.setAccessPointPrefix(OSM_AP_HOSTNAME);

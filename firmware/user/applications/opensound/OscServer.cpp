@@ -4,10 +4,10 @@
 
 void OscServer::init(){
   commandCount = 0;
-  setRemoteIP(networkSettings.remoteIPAddress);
-  setRemotePort(networkSettings.remotePort);
-  setBroadcastMode(networkSettings.broadcast);
-  autoRemoteIPAddress = networkSettings.autoremote;
+  setRemoteIP(settings.remoteIPAddress);
+  setRemotePort(settings.remotePort);
+  setBroadcastMode(settings.broadcast);
+  autoRemoteIPAddress = settings.autoremote;
 }
 
 void OscServer::setBroadcastMode(bool broadcast){
@@ -19,7 +19,7 @@ void OscServer::setBroadcastMode(bool broadcast){
     Serial.println(remoteIPAddress);
 #endif
   }else{
-    remoteIPAddress = networkSettings.remoteIPAddress;
+    remoteIPAddress = settings.remoteIPAddress;
 #ifdef SERIAL_DEBUG
     Serial.print("Remote IP: ");
     Serial.println(remoteIPAddress);
