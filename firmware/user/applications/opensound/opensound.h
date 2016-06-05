@@ -4,16 +4,16 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// #define SERIAL_DEBUG
+/* #define SERIAL_DEBUG */
 #define SERIAL_CONSOLE
 #define SERVICE_MDNS
 
-/* #define OSC_MESSAGE_MAX_PREFIX_SIZE (OSC_ADDRESS_MAX_LEN+5) */
-#define OSC_MESSAGE_MAX_PREFIX_SIZE 32
-#define OSC_MESSAGE_MAX_DATA_SIZE   38
+#define OSC_ADDRESS_MAX_LEN         19
+#define OSC_MESSAGE_SIZE            (OSC_ADDRESS_MAX_LEN+1+4+4)
+#define OSC_MESSAGE_COUNT           5
 #define ANALOG_THRESHOLD            31
 
-#define FIRMWARE_VERSION            "v0.8"
+#define FIRMWARE_VERSION            "v0.9"
 #define OSM_AP_HOSTNAME             "OpenSound"
 #define OSM_AP_AUTH                 "3"
 

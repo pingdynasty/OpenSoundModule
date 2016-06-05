@@ -69,8 +69,6 @@ public:
 
   void addCommand(const char* address, OscCommand* cmd, int minArgs = 0){
     if(commandCount < OSC_MAX_COMMANDS){
-      //      strncpy(commands[commandCount].address, address, OSC_ADDRESS_MAX_LEN);
-      //      commands[commandCount].address[OSC_ADDRESS_MAX_LEN-1] = '\0';
       commands[commandCount].address = address;
       commands[commandCount].minArgs = minArgs;
       commands[commandCount].cmd = cmd;    

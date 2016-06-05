@@ -9,7 +9,7 @@
 #include "socket_hal.h"
 
 #define UDP_TX_BUF_MAX_SIZE	128
-#define UDP_RX_BUF_MAX_SIZE	512
+#define UDP_RX_BUF_MAX_SIZE	256
 
 class UdpServer : public Stream, public Printable {
 protected:

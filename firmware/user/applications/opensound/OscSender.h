@@ -1,6 +1,7 @@
 #ifndef __OscSender_h__
 #define __OscSender_h__
 
+#include "opensound.h"
 #include "OscMessage.hpp"
 
 class OscSender {
@@ -11,19 +12,19 @@ public:
     CV_B,
     TRIGGER_A,
     TRIGGER_B,
-    MESSAGE_COUNT
   };
-  OscMessage messages[MESSAGE_COUNT];
+  OscMessage messages[OSC_MESSAGE_COUNT];
+  uint8_t buffer[OSC_MESSAGE_SIZE*OSC_MESSAGE_COUNT];
   OscSender();
   void init();
 
   void setAddress(OscMessageId mid, char* address){
-    if(mid < MESSAGE_COUNT)
+    if(mid < OSC_MESSAGE_COUNT)
       messages[mid].setAddress(address);
   }
 
   char* getAddress(OscMessageId mid){
-    if(mid < MESSAGE_COUNT)
+    if(mid < OSC_MESSAGE_COUNT)
       return messages[mid].getAddress();
     return NULL;
   }

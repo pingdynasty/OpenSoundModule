@@ -8,6 +8,9 @@
 
 class OscMessage {
 public:
+  // address points to the start of the message buffer
+  // todo: it's possible to reduce size of OscMessage
+  // by making these 8 or 16bit indices instead of 32bit pointers
   uint8_t* address;
   uint8_t* types;
   uint8_t* data;
@@ -139,6 +142,10 @@ public:
 	  size++;
 	return size;
       }
+    case 'T': // TRUE
+    case 'F': // FALSE
+    case 'N': // NIL
+    case 'I': // INFINITUM
     default:
       return 0;
     }

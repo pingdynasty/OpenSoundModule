@@ -4,7 +4,6 @@
 #include <inttypes.h>
 /* #include "application.h" */
 #include "opensound.h"
-#define OSC_ADDRESS_MAX_LEN         27
 
 #define NETWORK_SETTINGS_ADDRESS 0
 #define ADDRESS_SETTINGS_ADDRESS 64
@@ -38,7 +37,7 @@ public:
     EEPROM.put(address, *this);
   }
   void clearFlash(){
-    EEPROM.write(address, 0xff);
+    EEPROM.write(address, 0x00);
   }
 };
 
@@ -67,17 +66,30 @@ public:
 
 class AddressSettings : public ApplicationSettings<ADDRESS_SETTINGS_ADDRESS> {
 public:
-  char inputAddress[5][OSC_ADDRESS_MAX_LEN];
-  char outputAddress[5][OSC_ADDRESS_MAX_LEN];
+  // todo: let char* live in OscSender.messages
+  // to read, write, compare flash load to/from messages
+  /* char inputAddress[5][OSC_ADDRESS_MAX_LEN]; */
+  /* char outputAddress[5][OSC_ADDRESS_MAX_LEN]; */
+  char inputAddress[OSC_MESSAGE_COUNT][OSC_ADDRESS_MAX_LEN+1];
+  char outputAddress[OSC_MESSAGE_COUNT][OSC_ADDRESS_MAX_LEN+1];
 public:
   void reset();
   bool equals(const AddressSettings& other){
     return memcmp(this, &other, sizeof(*this)) == 0;
+    /* bool same = true; */
+    /* for(int i=0; i<OSC_MESSAGE_COUNT; ++i){ */
+    /*   if(strcmp(getInputAddress(i), other.getInputAddress(i)) != 0) */
+    /* 	same = false; */
+    /*   if(strcmp(getOutputAddress(i), other.getOutputAddress(i)) != 0) */
+    /* 	 same = false; */
+    /* } */
+    /* return same; */
+    /* /\* return memcmp(this, &other, sizeof(*this)) == 0; *\/ */
   }
   bool hasChanged(){
     if(settingsInFlash()){
       AddressSettings other;
-      other.loadFromFlash();
+      other.init();
       if(equals(other))
 	return false;
     }
@@ -91,11 +103,11 @@ public:
   }
   void setInputAddress(int i, const char* address){
     strncpy(inputAddress[i], address, OSC_ADDRESS_MAX_LEN);
-    inputAddress[i][OSC_ADDRESS_MAX_LEN-1] = '\0';
+    /* inputAddress[i][OSC_ADDRESS_MAX_LEN] = '\0'; */
   }
   void setOutputAddress(int i, const char* address){
     strncpy(outputAddress[i], address, OSC_ADDRESS_MAX_LEN);
-    outputAddress[i][OSC_ADDRESS_MAX_LEN-1] = '\0';
+    /* outputAddress[i][OSC_ADDRESS_MAX_LEN] = '\0'; */
   }
 };
 
@@ -117,7 +129,7 @@ public:
   bool hasChanged(){
     if(settingsInFlash()){
       RangeSettings other;
-      other.loadFromFlash();
+      other.init();
       if(equals(other))
 	return false;
     }

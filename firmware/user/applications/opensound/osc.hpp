@@ -35,62 +35,12 @@ void oscStatus(OscServer& server, OscMessage& msg){
   broadcastStatus();
 }
 
-float getFloatValue(OscMessage msg, int i){
-  float f;
-  switch(msg.getDataType(i)){
-  case 'f':
-    f = msg.getFloat(i);
-    break;
-  case 'i':
-    f = float(msg.getInt(i));
-    break;
-  case 'd':
-    f = float(msg.getDouble(i));
-    break;
-  case 'h':
-    f = float(msg.getLong(i));
-    break;
-  case 'T':
-    f = 1.0f;
-    break;
-  default:
-    f = 0.0f;
-    break;
-  }
-  return f;
-}
-
-bool getBoolValue(OscMessage msg, int i){
-  bool b;
-  switch(msg.getDataType(i)){
-  case 'f':
-    b = msg.getFloat(i) > 0.5;
-    break;
-  case 'i':
-    b = msg.getInt(i) != 0;
-    break;
-  case 'd':
-    b = msg.getDouble(i) > 0.5;
-    break;
-  case 'h':
-    b = msg.getLong(i) != 0;
-    break;
-  case 'T':
-    b = true;
-    break;
-  default:
-    b = false;
-    break;
-  }
-  return b;
-}
-
 void oscLed(OscServer& server, OscMessage& msg){
   debugMessage("osc led");
   if(msg.getSize() == 0)
     toggleLed();
   else
-    setLed(getBoolValue(msg, 0) ? LED_GREEN : LED_YELLOW);
+    setLed(msg.getAsBool(0) ? LED_GREEN : LED_YELLOW);
 }
 
 uint16_t scaleInputValue(int def, float value){
@@ -106,21 +56,21 @@ float scaleOutputValue(int def, uint16_t value){
 }
 
 void oscCv(OscServer& server, OscMessage& msg){
-  float a = getFloatValue(msg, 0);
+  float a = msg.getAsFloat(0);
   setCVA(scaleInputValue(CV_A_IN, a));
-  float b = getFloatValue(msg, 1);
+  float b = msg.getAsFloat(1);
   setCVB(scaleInputValue(CV_B_IN, b));
   debug << "osc cv: " << a << "/" << b << "\r\n";
 }
 
 void oscCvA(OscServer& server, OscMessage& msg){
-  float value = getFloatValue(msg, 0);
+  float value = msg.getAsFloat(0);
   debug << "osc cv a: " << value << "\r\n";
   setCVA(scaleInputValue(CV_A_IN, value));
 }
 
 void oscCvB(OscServer& server, OscMessage& msg){
-  float value = getFloatValue(msg, 0);
+  float value = msg.getAsFloat(0);
   debug << "osc cv b: " << value << "\r\n";
   setCVB(scaleInputValue(CV_B_IN, value));
 }
@@ -130,7 +80,7 @@ void oscTriggerA(OscServer& server, OscMessage& msg){
   if(msg.getSize() == 0)
     toggleTriggerA();
   else
-    setTriggerA(getBoolValue(msg, 0));
+    setTriggerA(msg.getAsBool(0));
 }
 
 void oscTriggerB(OscServer& server, OscMessage& msg){
@@ -138,7 +88,7 @@ void oscTriggerB(OscServer& server, OscMessage& msg){
   if(msg.getSize() == 0)
     toggleTriggerB();
   else
-    setTriggerB(getBoolValue(msg, 0));
+    setTriggerB(msg.getAsBool(0));
 }
 
 void sendCvA(uint16_t value){
