@@ -9,8 +9,9 @@ OscSender::OscSender(){
 }
 
 void OscSender::init(){
-  for(int i=0; i<OSC_MESSAGE_COUNT; ++i)
-    messages[i].setBuffer(buffer+i*OSC_MESSAGE_SIZE, OSC_MESSAGE_SIZE);
+  messages[0].setBuffer(buffer, 64);
+  for(int i=1; i<OSC_MESSAGE_COUNT; ++i)
+    messages[i].setBuffer(buffer+64+(i-1)*OSC_MESSAGE_SIZE, OSC_MESSAGE_SIZE);
   messages[STATUS].setPrefix(settings.outputAddress[0], ",s");
   messages[CV_A].setPrefix(settings.outputAddress[1], ",f");
   messages[CV_B].setPrefix(settings.outputAddress[2], ",f");

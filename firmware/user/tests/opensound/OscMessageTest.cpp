@@ -64,7 +64,18 @@ BOOST_AUTO_TEST_CASE(testSetAddress){
   BOOST_CHECK_EQUAL(msg.getDataType(0), 'i');
   BOOST_CHECK_EQUAL(msg.getDataType(1), 'f');
   BOOST_CHECK_EQUAL(msg.getDataType(2), 'f');
-  BOOST_CHECK_EQUAL(msg.getDataType(3), 'i');  
+  BOOST_CHECK_EQUAL(msg.getDataType(3), 'i');
+}
+
+BOOST_AUTO_TEST_CASE(testSetAddress2){
+  uint8_t buffer[64];
+  OscMessage msg(buffer, sizeof(buffer));
+  msg.setPrefix("/osm/status", ",s");
+  msg.setString(0, "hi");
+  msg.setAddress("/foo");
+  BOOST_CHECK(strcmp((char*)msg.getBuffer()+msg.getAddressLength(), ",s") == 0);
+  msg.setAddress("/osm/status/foo");
+  BOOST_CHECK(strcmp((char*)msg.getBuffer()+msg.getAddressLength(), ",s") == 0);
 }
 
 BOOST_AUTO_TEST_CASE(testParse){
@@ -81,13 +92,61 @@ BOOST_AUTO_TEST_CASE(testParse){
   BOOST_CHECK_EQUAL(msg.getInt(0), 80);
 }
 
-BOOST_AUTO_TEST_CASE(testStrings){
+BOOST_AUTO_TEST_CASE(testBasicStrings){
   uint8_t buffer[64];
   OscMessage msg(buffer, sizeof(buffer));
   msg.setAddress("osc");
   BOOST_CHECK_EQUAL(msg.getAddressLength(), 4);
   msg.setAddress("data");
   BOOST_CHECK_EQUAL(msg.getAddressLength(), 8);
+}
+
+BOOST_AUTO_TEST_CASE(testWriteOscString){
+  char buffer[64];
+  OscMessage::writeOscString(buffer, "osc");
+  BOOST_CHECK(strcmp(buffer, "osc") == 0);
+  BOOST_CHECK_EQUAL(buffer[3], '\0');
+  OscMessage::writeOscString(buffer, "data");
+  BOOST_CHECK(strcmp(buffer, "data") == 0);
+  BOOST_CHECK_EQUAL(buffer[4], '\0');
+  BOOST_CHECK_EQUAL(buffer[5], '\0');
+  BOOST_CHECK_EQUAL(buffer[6], '\0');
+  BOOST_CHECK_EQUAL(buffer[7], '\0');
+}
+
+BOOST_AUTO_TEST_CASE(testSetString){
+  uint8_t buffer[64];
+  OscMessage msg(buffer, sizeof(buffer));
+  msg.setPrefix("/osm/status", ",s");
+  msg.setString(0, "192.168.123.123:123456");
+  BOOST_CHECK_EQUAL(msg.getAddressLength(), 12);
+  BOOST_CHECK_EQUAL(msg.getPrefixLength(), 16);
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 16+24);
+  BOOST_CHECK(strcmp(msg.getString(0), "192.168.123.123:123456") == 0);
+  msg.setString(0, "1");
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 16+4);
+  msg.setString(0, "12");
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 16+4);
+  msg.setString(0, "123");
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 16+4);
+  msg.setString(0, "1234");
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 16+8);
+  msg.setString(0, "12345");
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 16+8);
+  msg.setString(0, "1");
+  BOOST_CHECK_EQUAL(msg.calculateMessageLength(), 16+4);
+  BOOST_CHECK_EQUAL(msg.getBuffer()[16], '1');
+  BOOST_CHECK_EQUAL(msg.getBuffer()[17], '\0');
+  BOOST_CHECK_EQUAL(msg.getBuffer()[18], '\0');
+  BOOST_CHECK_EQUAL(msg.getBuffer()[19], '\0');
+  msg.setString(0, "192.168.123.123:123456");
+  OscMessage msg2;
+  msg2.setBuffer(msg.getBuffer(), msg.calculateMessageLength());
+  msg2.parse();
+  BOOST_CHECK_EQUAL(msg2.getAddressLength(), 12);
+  BOOST_CHECK_EQUAL(msg2.getPrefixLength(), 16);
+  BOOST_CHECK_EQUAL(msg2.calculateMessageLength(), 16+24);
+  BOOST_CHECK(strcmp(msg2.getString(0), "192.168.123.123:123456") == 0);  
 }
 
 BOOST_AUTO_TEST_CASE(testSetInt){

@@ -76,6 +76,8 @@ public:
   void setBuffer(void* buffer, int length){
     // In a stream-based protocol such as TCP, the stream should begin with an int32 giving the size of the first packet, followed by the contents of the first packet, followed by the size of the second packet, etc.
     address = (uint8_t*)buffer;
+    types = address;
+    data = address;
     end = address+length;
   }
 
@@ -297,34 +299,30 @@ public:
     return u.d;
   }
 
+  static int writeOscString(void* dest, const char* str){
+    int len = strlen(str);
+    while(++len & 0x03); // pad to word boundary
+    stpncpy((char*)dest, str, len);
+    return len;
+  }
+
   void setAddress(const char* addr){
-    if(types != address){
+    if(getPrefixLength() > 0 && types != address){
       // save old types
-      char saved[strlen((char*)types)];
-      strcpy(saved, (char*)types);
-      setPrefix(addr, saved);
+      int len = getPrefixLength();
+      char saved[len];
+      stpncpy(saved, (char*)types, len);
+      types = address + writeOscString(address, addr);
+      data = types + writeOscString(types, saved);
     }else{
-      strcpy((char*)address, addr);
-      types = address+calculateAddressLength();
+      types = address + writeOscString(address, addr);
       data = types;
     }
   }
 
-  void setPrefix(const char* addr, const char* tags){    
-    // strncpy(address, addr, end-address);
-    // If the length of src is less than n, strncpy() writes additional null
-    // bytes to dest to ensure that a total of n bytes are written.
-    strcpy((char*)address, addr);
-    types = address+calculateAddressLength();
-    // todo: zero-fill
-    // while(((uint32_t)types & 0x03) && types+1 < end)
-    //   *types++ = '\0'; // fill end of address with 0 padding
-    // strncpy(types, tags, end-types);
-    strcpy((char*)types, tags);
-    data = types+calculateTypeTagLength();
-    // while(((uint32_t)data & 0x03) && data+1 < end)
-    //   *data++ = '\0';
-    // todo: zero-fill
+  void setPrefix(const char* addr, const char* tags){
+    types = address + writeOscString(address, addr);
+    data = types + writeOscString(types, tags);
   }
 
   // void write(Print& out){
@@ -337,7 +335,6 @@ public:
   }
 
   void setFloat(uint8_t index, float value){
-    // setData(index, &value, 4);
     set32(index, (uint8_t*)&value);
   }
 

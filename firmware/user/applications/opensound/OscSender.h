@@ -14,7 +14,7 @@ public:
     TRIGGER_B,
   };
   OscMessage messages[OSC_MESSAGE_COUNT];
-  uint8_t buffer[OSC_MESSAGE_SIZE*OSC_MESSAGE_COUNT];
+  uint8_t buffer[OSC_MESSAGE_SIZE*(OSC_MESSAGE_COUNT-1)+64]; // allocate 64 bytes for status message
   OscSender();
   void init();
 
