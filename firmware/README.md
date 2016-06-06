@@ -3,7 +3,7 @@
 ## Prerequisites
 * arm gcc compiler [1]
 * make and bash (to run the build scripts)
-* dfu-util [2] (to flash firmware to device)
+* dfu-util (to flash firmware to device) [2] 
 
 ## Build
 * edit make.sh to set the location of your arm-gcc installation, e.g.
@@ -14,11 +14,11 @@
 * connect a USB cable to the Open Sound Module and enter Photon DFU mode [3]
 * run the flash script from the `firmware` directory: `./flash.sh`
 
+## LICENCE
+Unless otherwise stated, all files in the directory `user/applications/opensound` are licensed under a GPLv2 licence.
+Unless otherwise stated, all other files are licensed under an LGPLv3 licence.
+
 ## References
 [1] https://launchpad.net/gcc-arm-embedded
 [2] http://dfu-util.sourceforge.net/
 [3] https://docs.particle.io/guide/getting-started/modes/photon/
-
-## LICENCE
-Unless otherwise stated, all files in the directory `user/applications/opensound` are licensed under a GPLv2 licence.
-Unless otherwise stated, all other files are licensed under an LGPLv3 licence.
