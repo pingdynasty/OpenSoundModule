@@ -5,7 +5,7 @@
 #include "ApplicationSettings.h"
 #include "UdpServer.h"
 
-#define OSC_MAX_COMMANDS 8
+#define OSC_MAX_COMMANDS 10
 // #define UDP_SERIAL_DEBUG
 
 class OscServer : public UdpServer {

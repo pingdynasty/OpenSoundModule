@@ -12,7 +12,7 @@ void DigitalBusReader::readBusFrame(uint8_t* frame){
     handleDiscover(id, (frame[1] << 16) | (frame[2]<<8) | frame[3]);
     break;
   case OWL_COMMAND_ENUM:
-    handleEnum(id, frame[1], frame[2] << 8, frame[3]);
+    handleEnum(id, frame[1], frame[2], frame[3]);
     break;
   case OWL_COMMAND_IDENT:
     if(id != uid){

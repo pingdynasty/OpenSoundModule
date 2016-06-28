@@ -17,6 +17,10 @@ void OscSender::init(){
   messages[CV_B].setPrefix(settings.outputAddress[2], ",f");
   messages[TRIGGER_A].setPrefix(settings.outputAddress[3], ",i");
   messages[TRIGGER_B].setPrefix(settings.outputAddress[4], ",i");
+#ifdef SERVICE_BUS
+  messages[PARAMETER_AA].setPrefix("/osm/aa", ",i");
+  messages[PARAMETER_AB].setPrefix("/osm/ab", ",i");
+#endif
 }
 
 

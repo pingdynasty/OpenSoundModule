@@ -12,6 +12,9 @@
 #ifdef SERVICE_MDNS
 #include "mdns/MDNS.h"
 #endif
+#ifdef SERVICE_BUS
+#include "DigitalBusReader.h"
+#endif
 
 SYSTEM_MODE(MANUAL);
 // #define RX_BUFFER_LENGTH 64
@@ -26,6 +29,9 @@ SYSTEM_MODE(MANUAL);
 ConnectionManager connection;
 #ifdef SERVICE_MDNS
 MDNS mdns;
+#endif
+#ifdef SERVICE_BUS
+DigitalBusReader bus;
 #endif
 
 void printInfo(Print& out){
@@ -164,6 +170,10 @@ void startServers(){
   debugMessage("startServers done");
   printInfo(Serial);
 #endif
+#ifdef SERVICE_BUS
+  bus.startDiscover();
+  debugMessage("started digital bus");
+#endif /* SERVICE_BUS */
 }
 
 void stopServers(){
@@ -314,6 +324,10 @@ void setup(){
 #endif /* SERVICE_MDNS */
   //  dacTimer.begin(dacCallback, 400, hmSec);
   // dacTimer.start();
+#ifdef SERVICE_BUS
+  Serial1.begin(DIGITAL_BUS_BAUD);
+  debugMessage("begin digital bus");
+#endif
   debugMessage("setup complete");
 }
 
@@ -335,6 +349,16 @@ void loop(){
   processConsole(Serial);
 #endif
   processButton();
+#ifdef SERVICE_BUS
+  while(Serial1.available() >= 4){
+    uint8_t buf[4];
+    buf[0] = (uint8_t)Serial1.read();
+    buf[1] = (uint8_t)Serial1.read();
+    buf[2] = (uint8_t)Serial1.read();
+    buf[3] = (uint8_t)Serial1.read();
+    bus.readBusFrame(buf);
+  }
+#endif
 }
 
 void processButton(){
@@ -346,6 +370,10 @@ void processButton(){
       lastButtonPress = millis();
       toggleLed();
       broadcastStatus();
+      bus.startDiscover();
+      if(bus.getPeers() > 1)
+	bus.startIdent();
+      debug << "Bus [" << bus.getUid() << "][" << bus.getPeers() << "]\r\n";
     }else{
       lastButtonPress = 0;
     }    
@@ -423,5 +451,17 @@ const char* getDeviceName(){
 void setDeviceName(const char* name){
   connection.setAccessPointPrefix(name);
 }
+
+#ifdef SERVICE_BUS
+void txParameter(uint8_t pid, uint16_t value){
+  debug << "setParameter [" << pid << "][" << value << "]\r\n" ;
+  oscsender.send((OscSender::OscMessageId)(OscSender::PARAMETER_AA+pid), value/4096.0f);
+}
+
+void rxParameter(uint8_t pid, uint16_t value){
+  bus.sendParameterChange(pid, value);
+}
+
+#endif
 
 #include "console.h"

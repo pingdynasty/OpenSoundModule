@@ -4,13 +4,20 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/* #define SERIAL_DEBUG */
+#define SERIAL_DEBUG
 #define SERIAL_CONSOLE
 #define SERVICE_MDNS
 
+#define SERVICE_BUS
+#define DIGITAL_BUS_BAUD    115200
+
 #define OSC_ADDRESS_MAX_LEN         19
 #define OSC_MESSAGE_SIZE            (OSC_ADDRESS_MAX_LEN+1+4+4)
+#ifdef SERVICE_BUS
+#define OSC_MESSAGE_COUNT           7
+#else
 #define OSC_MESSAGE_COUNT           5
+#endif
 #define ANALOG_THRESHOLD            31
 
 #define FIRMWARE_VERSION            "v0.9"
@@ -92,6 +99,10 @@ extern "C" {
   void broadcastStatus();
   void debugMessage(const char* msg);
   void assert_failed(const char* msg, const char* location, int line);
+#ifdef SERVICE_BUS
+  void txParameter(uint8_t pid, uint16_t value);
+  void rxParameter(uint8_t pid, uint16_t value);
+#endif
 #ifdef  __cplusplus
 }
 #endif

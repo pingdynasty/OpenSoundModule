@@ -43,6 +43,21 @@ void oscLed(OscServer& server, OscMessage& msg){
     setLed(msg.getAsBool(0) ? LED_GREEN : LED_YELLOW);
 }
 
+#ifdef SERVICE_BUS
+#include "OpenWareMidiControl.h"
+void oscAA(OscServer& server, OscMessage& msg){
+  debugMessage("osc aa");
+  float value = msg.getAsFloat(0);
+  rxParameter(PARAMETER_AA, max(INT16_MIN, min(INT16_MAX, (int32_t)(value*4096))));
+}
+
+void oscAB(OscServer& server, OscMessage& msg){
+  debugMessage("osc ab");
+  float value = msg.getAsFloat(0);
+  rxParameter(PARAMETER_AB, value*4096);
+}
+#endif
+
 uint16_t scaleInputValue(int def, float value){
   value = (value - settings.min[def])/(settings.max[def] - settings.min[def]);
   return MIN(MAX(int(4095.0f*value), 0), 4095);
@@ -117,4 +132,8 @@ void configureOsc(){
   oscserver.addCommand(settings.inputAddress[4], &oscTriggerB);
   oscserver.addCommand("/osm/cv", &oscCv, 2);
   oscserver.addCommand("/osm/led", &oscLed);
+#ifdef SERVICE_BUS
+  oscserver.addCommand("/osm/aa", &oscAA);
+  oscserver.addCommand("/osm/ab", &oscAB);
+#endif
 }

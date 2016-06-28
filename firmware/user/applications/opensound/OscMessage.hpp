@@ -154,6 +154,8 @@ public:
   }
 
   float getAsFloat(uint8_t i){
+    if(getSize() < i)
+      return 0.0f;
     float value;
     switch(getDataType(i)){
     case 'f':
@@ -179,6 +181,8 @@ public:
   }
 
   float getAsInt(uint8_t i){
+    if(getSize() < i)
+      return 0;
     int value;
     switch(getDataType(i)){
     case 'f':
@@ -204,6 +208,8 @@ public:
   }
 
   bool getAsBool(uint8_t i){
+    if(getSize() < i)
+      return false;
     bool value;
     switch(getDataType(i)){
     case 'f':

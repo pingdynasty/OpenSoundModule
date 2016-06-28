@@ -12,6 +12,10 @@ public:
     CV_B,
     TRIGGER_A,
     TRIGGER_B,
+#ifdef SERVICE_BUS
+    PARAMETER_AA,
+    PARAMETER_AB,
+#endif
   };
   OscMessage messages[OSC_MESSAGE_COUNT];
   uint8_t buffer[OSC_MESSAGE_SIZE*(OSC_MESSAGE_COUNT-1)+64]; // allocate 64 bytes for status message
