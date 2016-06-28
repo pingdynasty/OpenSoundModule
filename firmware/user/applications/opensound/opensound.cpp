@@ -370,10 +370,12 @@ void processButton(){
       lastButtonPress = millis();
       toggleLed();
       broadcastStatus();
-      bus.startDiscover();
-      if(bus.getPeers() > 1)
+#ifdef SERVICE_BUS
+      bool bussed = bus.connected();
+      if(bussed)
 	bus.startIdent();
-      debug << "Bus [" << bus.getUid() << "][" << bus.getPeers() << "]\r\n";
+      debug << "Bus [" << bussed << "][" << bus.getUid() << "][" << bus.getNuid() << "][" << bus.getPeers() << "]\r\n";
+#endif
     }else{
       lastButtonPress = 0;
     }    
@@ -416,6 +418,9 @@ void process(){
   //  websocketserver.loop();
   //  tcpsocketserver.loop();
   oscserver.loop();
+// #ifdef SERVICE_BUS
+//   bus.connected();
+// #endif
 }
 
 void reload(){
@@ -460,6 +465,13 @@ void txParameter(uint8_t pid, uint16_t value){
 
 void rxParameter(uint8_t pid, uint16_t value){
   bus.sendParameterChange(pid, value);
+}
+
+void rxError(const char* reason){
+  Serial1.flush();
+  debugMessage("Digital bus receive error: ");
+  debugMessage(reason);
+  debugMessage(".\r\n");
 }
 
 #endif

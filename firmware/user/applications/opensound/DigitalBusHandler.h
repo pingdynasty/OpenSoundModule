@@ -19,9 +19,11 @@ private:
   static const uint32_t NO_TOKEN = 0xffffffff;
 public:
   DigitalBusHandler();
+  bool connected();
   uint32_t generateToken();
   uint8_t getPeers(){ return peers; }
   uint8_t getUid(){ return uid; }
+  uint8_t getNuid(){ return nuid; }
   void startDiscover();
   void sendDiscover(uint8_t seq, uint32_t token);
   void handleDiscover(uint8_t seq, uint32_t other);

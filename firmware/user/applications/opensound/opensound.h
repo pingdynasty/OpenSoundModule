@@ -11,18 +11,18 @@
 #define SERVICE_BUS
 #define DIGITAL_BUS_BAUD    115200
 
-#define OSC_ADDRESS_MAX_LEN         19
-#define OSC_MESSAGE_SIZE            (OSC_ADDRESS_MAX_LEN+1+4+4)
+#define OSC_ADDRESS_MAX_LEN 19
+#define OSC_MESSAGE_SIZE    (OSC_ADDRESS_MAX_LEN+1+4+4)
 #ifdef SERVICE_BUS
-#define OSC_MESSAGE_COUNT           7
+#define OSC_MESSAGE_COUNT   7
 #else
-#define OSC_MESSAGE_COUNT           5
+#define OSC_MESSAGE_COUNT   5
 #endif
-#define ANALOG_THRESHOLD            31
+#define ANALOG_THRESHOLD    31
 
-#define FIRMWARE_VERSION            "v0.9"
-#define OSM_AP_HOSTNAME             "OpenSound"
-#define OSM_AP_AUTH                 "3"
+#define FIRMWARE_VERSION    "v0.9bus"
+#define OSM_AP_HOSTNAME     "OpenSound"
+#define OSM_AP_AUTH         "3"
 
 #define ASSERT(cond, msg) if(!(cond)){assert_failed(msg, __PRETTY_FUNCTION__, __LINE__);}
 
@@ -102,6 +102,7 @@ extern "C" {
 #ifdef SERVICE_BUS
   void txParameter(uint8_t pid, uint16_t value);
   void rxParameter(uint8_t pid, uint16_t value);
+  void rxError(const char* reason);
 #endif
 #ifdef  __cplusplus
 }
