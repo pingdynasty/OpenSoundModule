@@ -77,6 +77,13 @@ void printInfo(Print& out){
   out.println(connection.getAccessPointSSID());
   out.print("Free memory: "); 
   out.println(System.freeMemory());
+#ifdef SERVICE_BUS
+  out.print("Digital Bus UID["); 
+  out.print(bus.getUid());
+  out.print("]: ");
+  out.print(bus.getPeers());
+  out.println(" peers"); 
+#endif
 }
 
 void setLed(LedPin led){
@@ -458,20 +465,23 @@ void setDeviceName(const char* name){
 }
 
 #ifdef SERVICE_BUS
-void txParameter(uint8_t pid, uint16_t value){
-  debug << "setParameter [" << pid << "][" << value << "]\r\n" ;
-  oscsender.send((OscSender::OscMessageId)(OscSender::PARAMETER_AA+pid), value/4096.0f);
-}
-
-void rxParameter(uint8_t pid, uint16_t value){
+/* outgoing: send message over digital bus */
+void txParameter(uint8_t pid, int16_t value){
+  debug << "txParameter [" << pid << "][" << value << "]\r\n" ;
   bus.sendParameterChange(pid, value);
 }
 
+/* incoming: callback when message received on digital bus */
+void rxParameter(uint8_t pid, int16_t value){
+  debug << "rxParameter [" << pid << "][" << value << "]\r\n" ;
+  oscsender.send((OscSender::OscMessageId)(OscSender::PARAMETER_AA+pid), value/4096.0f);
+}
+
 void rxError(const char* reason){
-  Serial1.flush();
-  debugMessage("Digital bus receive error: ");
-  debugMessage(reason);
-  debugMessage(".\r\n");
+  debug << "Digital bus receive error: " << reason << ".\r\n";
+  debug << "Flushing " << Serial1.available() << " bytes.\r\n";
+  while(Serial1.available())
+    Serial1.read();
 }
 
 #endif

@@ -13,11 +13,7 @@
 
 #define OSC_ADDRESS_MAX_LEN 19
 #define OSC_MESSAGE_SIZE    (OSC_ADDRESS_MAX_LEN+1+4+4)
-#ifdef SERVICE_BUS
-#define OSC_MESSAGE_COUNT   7
-#else
 #define OSC_MESSAGE_COUNT   5
-#endif
 #define ANALOG_THRESHOLD    31
 
 #define FIRMWARE_VERSION    "v0.9bus"
@@ -43,6 +39,11 @@
 #ifdef  __cplusplus
 
 #include "application.h"
+
+static const char* PARAMETER_NAMES[16] = { 
+  "/aa", "/ab", "/ac", "/ad", "/ae", "/af", "/ag", "/ah", 
+  "/ba", "/bb", "/bc", "/bd", "/be", "/bf", "/bg", "/bh" 
+};
 
 template<class T>
 inline Print &operator <<(Print &obj, T arg)
@@ -100,8 +101,10 @@ extern "C" {
   void debugMessage(const char* msg);
   void assert_failed(const char* msg, const char* location, int line);
 #ifdef SERVICE_BUS
-  void txParameter(uint8_t pid, uint16_t value);
-  void rxParameter(uint8_t pid, uint16_t value);
+  /* outgoing: send message over digital bus */
+  void txParameter(uint8_t pid, int16_t value);
+  /* incoming: callback when message received on digital bus */
+  void rxParameter(uint8_t pid, int16_t value);
   void rxError(const char* reason);
 #endif
 #ifdef  __cplusplus

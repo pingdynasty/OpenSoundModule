@@ -14,7 +14,7 @@ private:
   uint8_t UUID[12]; // 
   static const uint8_t VERSION = 0x01; // protocol version
   static const uint8_t PRODUCT = 0x01;  // product id
-  static const uint8_t PARAMETERS = 5; // number of parameters defined by this product
+  static const uint8_t PARAMETERS = 4; // number of parameters defined by this product
   static const uint8_t NO_UID = 0xff;
   static const uint32_t NO_TOKEN = 0xffffffff;
 public:

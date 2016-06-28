@@ -8,7 +8,7 @@
 
 class MidiHandler {
 private:
-  int16_t midi_values[NOF_PARAMETERS];
+  /* int16_t midi_values[NOF_PARAMETERS]; */
 public:
   MidiHandler();
   void handleProgramChange(uint8_t status, uint8_t pc);

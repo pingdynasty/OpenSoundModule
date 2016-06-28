@@ -14,15 +14,19 @@ class OscServer : public UdpServer {
     const char* address;
     uint8_t minArgs;
     OscCommand* cmd;
-    bool matches(OscMessage& msg){
-      return strncmp(msg.getAddress(), address, OSC_ADDRESS_MAX_LEN) == 0 && msg.getSize() >= minArgs;
+    /* bool matches(OscMessage& msg){ */
+    /*   return strncmp(msg.getAddress(), address, OSC_ADDRESS_MAX_LEN) == 0 && msg.getSize() >= minArgs; */
+    /* } */
+    bool matches(const char* addr, uint8_t len){
+      return len >= minArgs && strncmp(addr, address, OSC_ADDRESS_MAX_LEN) == 0;
     }
   };
-  int commandCount;
+  uint8_t commandCount;
   OscCommandMap commands[OSC_MAX_COMMANDS];
+  char* prefix;
+  uint8_t prefixLen;
 public:
-  OscServer() : commandCount(0) {}
-
+  OscServer();
   void init();
 
   void loop(){
@@ -66,7 +70,6 @@ public:
   void reset(){
     commandCount = 0;
   }
-
   void addCommand(const char* address, OscCommand* cmd, int minArgs = 0){
     if(commandCount < OSC_MAX_COMMANDS){
       commands[commandCount].address = address;
@@ -74,6 +77,10 @@ public:
       commands[commandCount].cmd = cmd;    
       commandCount++;
     }
+  }
+
+  const char* getPrefix(){
+    return prefix;
   }
 
   const char* getAddress(int cmd){
@@ -90,53 +97,9 @@ public:
     }
   }
 
-  void udp_recv_packet(uint8_t* buffer, int size){
-    if(size >= 28 && strncmp((const char*)buffer, "#bundle", 7) == 0){
-      int len = OscMessage::getOscInt32(buffer+16);
-      buffer += 16; // discard #bundle and timestamp
-      size -= 16;
-#ifdef UDP_SERIAL_DEBUG
-      Serial.print("#bundle ");
-      Serial.print(len);
-      Serial.print('/');
-      Serial.println(size);
-#endif
-      while(len >= 8 && size >= len+4){
-	processMessage(buffer+4, len);
-	buffer += len+4;
-	size -= len+4;
-	len = size >= 12 ? OscMessage::getOscInt32(buffer) : 0;
-#ifdef UDP_SERIAL_DEBUG
-      Serial.print("next ");
-      Serial.print(len);
-      Serial.print('/');
-      Serial.println(size);
-#endif
-      }
-    }else if(size >= 8 && buffer[0] == '/'){
-      processMessage(buffer, size);
-    } // else ignore
-  }
-
-  void processMessage(uint8_t* buffer, int size){
-#ifdef UDP_SERIAL_DEBUG
-    Serial.print("osc message ");
-    Serial.println(size);
-#endif
-    OscMessage msg(buffer, size);
-    msg.parse();
-    for(int i=0; i<commandCount; ++i)
-      if(commands[i].matches(msg)){
-	commands[i].cmd(*this, msg);
-	break;
-      }
-  }
-
-  void sendMessage(OscMessage& msg){
-    beginPacket();
-    write(msg.getBuffer(), msg.calculateMessageLength());
-    endPacket();
-  }
+  void udp_recv_packet(uint8_t* buffer, int size);
+  void processMessage(uint8_t* buffer, int size);
+  void sendMessage(OscMessage& msg);
 
   bool isAutoMode(){
     return autoRemoteIPAddress;

@@ -13,8 +13,8 @@ public:
     TRIGGER_A,
     TRIGGER_B,
 #ifdef SERVICE_BUS
-    PARAMETER_AA,
-    PARAMETER_AB,
+    PARAMETER_AA = 16,
+    PARAMETER_BH = 23
 #endif
   };
   OscMessage messages[OSC_MESSAGE_COUNT];

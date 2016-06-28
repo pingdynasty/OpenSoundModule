@@ -9,6 +9,11 @@ WebServer webserver;
 void configureWeb(){
 }
 
+#ifdef SERVICE_BUS
+#include "DigitalBusReader.h"
+extern DigitalBusReader bus;
+#endif
+
 int32_t process_status(const char* url, wiced_http_response_stream_t* s, void* arg, wiced_http_message_body_t* body){		       
   Streamer stream(s);
   stream << OSM_BEGIN << "<h1>Status</h1><h2>Open Sound Module</h2>";
@@ -24,6 +29,9 @@ int32_t process_status(const char* url, wiced_http_response_stream_t* s, void* a
   */
   if(WiFi.ready())
     stream << "<p>Ready!</p>";
+#ifdef SERVICE_BUS
+  stream << "<p>Digital Bus: " << bus.getPeers() << " peers</p>";
+#endif
   /*
   if(WiFi.hasCredentials())
     stream << "<p>WiFi credentials stored</p>";
@@ -179,15 +187,29 @@ int32_t process_address(const char* u, wiced_http_response_stream_t* s, void* ar
       updated = true;
     }
   }
+  char* param = url.getParameter("ip", 2);
+  if(param != NULL){
+    debug << "setting input prefix [" << param << "]\r\n";
+    settings.setInputPrefix(param);
+    updated = true;
+  }
+  param = url.getParameter("op", 2);
+  if(param != NULL){
+    debug << "setting output prefix [" << param << "]\r\n";
+    settings.setOutputPrefix(param);
+    updated = true;
+  }
   Streamer stream(s);
   stream << OSM_BEGIN << "<h1>Address Mapping</h1><form action='/address' method='GET'>";
   stream << "<h2>Receive</h2>"
+	 << "<p>Prefix</p><input type='text' name='ip' value='" << settings.inputPrefix << "'><br>"
 	 << "<p>Status</p><input type='text' name='0' value='" << settings.getInputAddress(0) << "'><br>"
 	 << "<p>CV A</p><input type='text' name='1' value='" << settings.getInputAddress(1) << "'><br>"
 	 << "<p>CV B</p><input type='text' name='2' value='" << settings.getInputAddress(2) << "'><br>"
 	 << "<p>Trigger A</p><input type='text' name='3' value='" << settings.getInputAddress(3) << "'><br>"
 	 << "<p>Trigger B</p><input type='text' name='4' value='" << settings.getInputAddress(4) << "'><br>";
   stream << "<h2>Send</h2>"
+	 << "<p>Prefix</p><input type='text' name='op' value='" << settings.outputPrefix << "'><br>"
 	 << "<p>Status</p><input type='text' name='5' value='" << settings.getOutputAddress(0) << "'><br>"
 	 << "<p>CV A</p><input type='text' name='6' value='" << settings.getOutputAddress(1) << "'><br>"
 	 << "<p>CV B</p><input type='text' name='7' value='" << settings.getOutputAddress(2) << "'><br>"

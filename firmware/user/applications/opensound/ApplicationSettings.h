@@ -62,6 +62,8 @@ public:
   // to read, write, compare flash load to/from messages
   /* char inputAddress[5][OSC_ADDRESS_MAX_LEN]; */
   /* char outputAddress[5][OSC_ADDRESS_MAX_LEN]; */
+  char inputPrefix[16];
+  char outputPrefix[16];
   char inputAddress[OSC_MESSAGE_COUNT][OSC_ADDRESS_MAX_LEN+1];
   char outputAddress[OSC_MESSAGE_COUNT][OSC_ADDRESS_MAX_LEN+1];
   const char* getInputAddress(int i){
@@ -70,15 +72,18 @@ public:
   const char* getOutputAddress(int i){
     return outputAddress[i];
   }
+  void setInputPrefix(const char* address){
+    strncpy(inputPrefix, address, sizeof(inputPrefix)-1);
+  }
+  void setOutputPrefix(const char* address){
+    strncpy(outputPrefix, address, sizeof(outputPrefix)-1);
+  }
   void setInputAddress(int i, const char* address){
     strncpy(inputAddress[i], address, OSC_ADDRESS_MAX_LEN);
-    /* inputAddress[i][OSC_ADDRESS_MAX_LEN] = '\0'; */
   }
   void setOutputAddress(int i, const char* address){
     strncpy(outputAddress[i], address, OSC_ADDRESS_MAX_LEN);
-    /* outputAddress[i][OSC_ADDRESS_MAX_LEN] = '\0'; */
   }
-
   float min[4];
   float max[4];
 };
