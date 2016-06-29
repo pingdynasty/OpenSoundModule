@@ -74,7 +74,7 @@ void MidiReader::readMidiFrame(uint8_t* frame){
     break;
   default:
     debug << "rx error [" << frame[0] << "]\r\n";
-    rxError("Invalid USB MIDI message");
+    bus_rx_error("Invalid USB MIDI message");
     break;
   }
 }

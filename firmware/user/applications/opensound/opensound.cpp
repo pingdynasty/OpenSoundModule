@@ -466,20 +466,24 @@ void setDeviceName(const char* name){
 
 #ifdef SERVICE_BUS
 /* outgoing: send message over digital bus */
-void txParameter(uint8_t pid, int16_t value){
-  debug << "txParameter [" << pid << "][" << value << "]\r\n" ;
+void bus_tx_parameter(uint8_t pid, int16_t value){
+  debug << "tx parameter [" << pid << "][" << value << "]\r\n" ;
   bus.sendParameterChange(pid, value);
 }
 
 /* incoming: callback when message received on digital bus */
-void rxParameter(uint8_t pid, int16_t value){
-  debug << "rxParameter [" << pid << "][" << value << "]\r\n" ;
+void bus_rx_parameter(uint8_t pid, int16_t value){
+  debug << "rx parameter [" << pid << "][" << value << "]\r\n" ;
   oscsender.send((OscSender::OscMessageId)(OscSender::PARAMETER_AA+pid), value/4096.0f);
 }
 
-void rxError(const char* reason){
+void bus_tx_error(const char* reason){
+  debug << "Digital bus send error: " << reason << ".\r\n";
+}
+
+void bus_rx_error(const char* reason){
   debug << "Digital bus receive error: " << reason << ".\r\n";
-  debug << "Flushing " << Serial1.available() << " bytes.\r\n";
+  debug << "Discarding " << Serial1.available() << " bytes.\r\n";
   while(Serial1.available())
     Serial1.read();
 }

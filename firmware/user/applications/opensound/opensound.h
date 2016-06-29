@@ -102,10 +102,11 @@ extern "C" {
   void assert_failed(const char* msg, const char* location, int line);
 #ifdef SERVICE_BUS
   /* outgoing: send message over digital bus */
-  void txParameter(uint8_t pid, int16_t value);
+  void bus_tx_parameter(uint8_t pid, int16_t value);
   /* incoming: callback when message received on digital bus */
-  void rxParameter(uint8_t pid, int16_t value);
-  void rxError(const char* reason);
+  void bus_rx_parameter(uint8_t pid, int16_t value);
+  void bus_tx_error(const char* reason);
+  void bus_rx_error(const char* reason);
 #endif
 #ifdef  __cplusplus
 }

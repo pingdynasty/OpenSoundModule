@@ -7,7 +7,6 @@ class DigitalBusHandler : public MidiReader {
 protected:
   uint8_t uid; // this device id
   uint8_t nuid; // downstream device id
-private:
   uint32_t token;
   uint8_t peers;
   uint16_t parameterOffset;

@@ -141,7 +141,7 @@ void DigitalBusHandler::sendParameterChange(uint8_t pid, int16_t value){
 
 void DigitalBusHandler::handleParameterChange(uint8_t pid, int16_t value){
   debug << "rx param [" << pid << "][" << value << "]\r\n";
-  rxParameter(pid, value);
+  bus_rx_parameter(pid, value);
   // todo
   // setParameter(pid, value);  
 }
