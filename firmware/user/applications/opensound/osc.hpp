@@ -12,7 +12,7 @@ OscSender oscsender;
 void sendOscStatus(const char* status){
   debugMessage("sending osc status");
   debugMessage(status);
-  oscsender.send(OscSender::STATUS, status);
+  oscsender.sendString(OscSender::STATUS, status);
   //  osc_status_msg.setString(0, status);
   //  oscserver.sendMessage(osc_status_msg);
 }
@@ -92,19 +92,19 @@ void oscTriggerB(OscServer& server, OscMessage& msg){
 }
 
 void sendCvA(uint16_t value){
-  oscsender.send(OscSender::CV_A, scaleOutputValue(CV_A_OUT, value));
+  oscsender.sendFloat(OscSender::CV_A, scaleOutputValue(CV_A_OUT, value));
 }
 
 void sendCvB(uint16_t value){
-  oscsender.send(OscSender::CV_B, scaleOutputValue(CV_B_OUT, value));
+  oscsender.sendFloat(OscSender::CV_B, scaleOutputValue(CV_B_OUT, value));
 }
 
 void sendTriggerA(bool value){
-  oscsender.send(OscSender::TRIGGER_A, (int)value);
+  oscsender.sendInt(OscSender::TRIGGER_A, (int)value);
 }
 
 void sendTriggerB(bool value){
-  oscsender.send(OscSender::TRIGGER_B, (int)value);
+  oscsender.sendInt(OscSender::TRIGGER_B, (int)value);
 }
 
 void configureOsc(){

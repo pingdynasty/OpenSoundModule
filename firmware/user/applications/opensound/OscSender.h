@@ -13,7 +13,7 @@ public:
     TRIGGER_A,
     TRIGGER_B,
 #ifdef SERVICE_BUS
-    PARAMETER_AA = 16,
+    PARAMETER_AA = 8,
     PARAMETER_BH = 23
 #endif
   };
@@ -33,9 +33,9 @@ public:
     return NULL;
   }
 
-  void send(OscMessageId mid, int value);
-  void send(OscMessageId mid, float value);
-  void send(OscMessageId mid, const char* value);
+  void sendInt(OscMessageId mid, int value);
+  void sendFloat(OscMessageId mid, float value);
+  void sendString(OscMessageId mid, const char* value);
 };
 
 #endif /* __OscSender_h__ */

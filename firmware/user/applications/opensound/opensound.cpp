@@ -474,7 +474,8 @@ void bus_tx_parameter(uint8_t pid, int16_t value){
 /* incoming: callback when message received on digital bus */
 void bus_rx_parameter(uint8_t pid, int16_t value){
   debug << "rx parameter [" << pid << "][" << value << "]\r\n" ;
-  oscsender.send((OscSender::OscMessageId)(OscSender::PARAMETER_AA+pid), value/4096.0f);
+  // oscsender.sendFloat((OscSender::OscMessageId)(OscSender::PARAMETER_AA+pid), value/4096.0f);
+  oscsender.sendFloat((OscSender::OscMessageId)pid, value/4096.0f);
 }
 
 void bus_tx_error(const char* reason){

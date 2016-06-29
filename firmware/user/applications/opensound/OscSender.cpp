@@ -33,7 +33,7 @@ void OscSender::init(){
 }
 
 
-void OscSender::send(OscMessageId mid, int value){
+void OscSender::sendInt(OscMessageId mid, int value){
   if(mid < OSC_MESSAGE_COUNT){ 
     messages[mid].setInt(0, value);
     oscserver.beginPacket();
@@ -43,23 +43,25 @@ void OscSender::send(OscMessageId mid, int value){
   }
 }
 
-void OscSender::send(OscMessageId mid, float value){
+void OscSender::sendFloat(OscMessageId mid, float value){
   if(mid < OSC_MESSAGE_COUNT){
     messages[mid].setFloat(0, value);
     oscserver.beginPacket();
     oscserver.write(messages[mid].getBuffer(), messages[mid].calculateMessageLength());
     oscserver.endPacket();
   }else if(mid >= PARAMETER_AA && mid <= PARAMETER_BH){
-    OscMessage msg;
+    uint8_t buf[OSC_MESSAGE_SIZE];
+    OscMessage msg(buf, OSC_MESSAGE_SIZE);
     setPrefix(msg, settings.outputPrefix, PARAMETER_NAMES[mid-PARAMETER_AA], ",f");
     msg.setFloat(0, value);
+    debug << "sending [" << msg.getAddress() << "][" << msg.getAsFloat(0) << "]\r\n";
     oscserver.beginPacket();
     oscserver.write(msg.getBuffer(), msg.calculateMessageLength());
     oscserver.endPacket();
   }
 }
 
-void OscSender::send(OscMessageId mid, const char* value){
+void OscSender::sendString(OscMessageId mid, const char* value){
   if(mid < OSC_MESSAGE_COUNT){
     messages[mid].setString(0, value);
     oscserver.beginPacket();
