@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define SERIAL_DEBUG
+
 #ifndef CHECKSUM_ERROR_STATUS
 #define CHECKSUM_ERROR_STATUS      -10
 #endif

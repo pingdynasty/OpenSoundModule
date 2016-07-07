@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include "message.h"
 
-#define SERIAL_DEBUG
 #define SERIAL_CONSOLE
 #define SERVICE_MDNS
 
