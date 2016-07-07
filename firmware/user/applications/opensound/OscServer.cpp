@@ -78,8 +78,10 @@ void OscServer::processMessage(uint8_t* buffer, int size){
       }
     }
     for(int i=0; i<16; ++i){
-      if(strcmp(PARAMETER_NAMES[i], address) == 0)
-	bus_tx_parameter(i, (int16_t)(msg.getAsFloat(0)*4096));
+      if(strcmp(PARAMETER_NAMES[i], address) == 0){
+	bus_tx_parameter(PARAMETER_AA+i, (int16_t)(msg.getAsFloat(0)*4096));
+	break;
+      }
     }
   }
 }
