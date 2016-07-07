@@ -1,12 +1,12 @@
 #include "DigitalBusHandler.h"
 #include "MidiStatus.h"
-#include "application.h"
-#include "opensound.h"
+#include "message.h"
+#include "serial.h"
+#include "bus.h"
 
 DigitalBusHandler::DigitalBusHandler() 
   : uid(NO_UID), nuid(NO_UID), token(NO_TOKEN), peers(0), parameterOffset(0) {
-  // UUID = (uint8_t*) = Particle.deviceID()
-  Particle.deviceID().getBytes(UUID, sizeof(UUID)); // returns string pointer
+  UUID = (uint8_t*)bus_deviceid();
 }
 
 void DigitalBusHandler::sendMessage(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4){
@@ -15,9 +15,9 @@ void DigitalBusHandler::sendMessage(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t 
 }
 
 void DigitalBusHandler::sendFrame(uint8_t* frame){
-  debug << "tx bus [" << frame[0] << "]\r\n";
-  Serial1.write(frame, 4);
-  // serial_write(frame, 4);
+  serial_write(frame, 4);
+  // debug << "tx bus [" << frame[0] << "]\r\n";
+  // Serial1.write(frame, 4);
 }
 
 uint32_t DigitalBusHandler::generateToken(){
@@ -31,22 +31,23 @@ uint32_t DigitalBusHandler::generateToken(){
 
 void DigitalBusHandler::startDiscover(){
   // while(token == NO_TOKEN) // todo: what if generated token == NO_TOKEN?
-  debug << "startDiscover [" << uid << "][" << token << "]\r\n";
+  debug << "startDiscover [" << uid << "][" << (int)token << "]\r\n";
   if(token == NO_TOKEN)
     token = generateToken();
-  if(peers == 0){
-    uid = 0; // start by assuming we will be UID 0
-    sendDiscover(0, token);
-  }
+  peers = 0;
+  uid = 0; // start by assuming we will be UID 0
+  nuid = NO_UID;
+  sendDiscover(0, token);
 }
 
 void DigitalBusHandler::sendDiscover(uint8_t seq, uint32_t token){
-  debug << "tx disco [" << seq << "][" << token << "]\r\n";
+  debug << "tx disco [" << seq << "][" << (int)token << "]\r\n";
   sendMessage(OWL_COMMAND_DISCOVER|seq, token>>16, token>>8, token);
 }
 
 void DigitalBusHandler::handleDiscover(uint8_t seq, uint32_t other){
-  debug << "rx disco [" << seq << "][" << other << "]\r\n";
+  status = DISCOVERING;
+  debug << "rx disco [" << seq << "][" << (int)other << "]\r\n";
   // on receipt of other token, add +1 to seq and pass it on, then send own token.
   // once we get our own token back, the seq tells us how many peers there are.
   // lowest token then takes precedence.
@@ -83,6 +84,7 @@ void DigitalBusHandler::sendEnum(uint8_t id, uint8_t version, uint8_t product, u
 }
 
 void DigitalBusHandler::handleEnum(uint8_t id, uint8_t version, uint8_t product, uint8_t params){
+  status = ENUMERATING;
   debug << "rx enum [" << id << "][" << version << "][" << product << "][" << params << "]\r\n";
   if(uid == NO_UID){
     // our UID has not been set yet
@@ -92,18 +94,19 @@ void DigitalBusHandler::handleEnum(uint8_t id, uint8_t version, uint8_t product,
     sendEnum(uid, VERSION, PRODUCT, parameterOffset+PARAMETERS);
     // note that only one ENUM should be received as they are not propagated.
     // downstream UID will be (uid+1 > peers) ? 0 : uid+1
+  }
+  if(nuid == NO_UID){
     nuid = uid+1;
     if(nuid >= peers)
       nuid = 0;
-  }else if(uid == 0){
-    nuid = 1;
-  }else if(uid == id){
-    // we are talking to ourselves: ignore
-  }else{
-    // something must have gone wrong, we already have a UID
-    // but this might be the second round?
-    debug << "enum error [" << uid << "] " << "[" << parameterOffset << "]\r\n";
   }
+  // }else if(uid == id){
+  //   // we are talking to ourselves: ignore
+  // }else{
+  //   // something must have gone wrong, we already have a UID
+  //   // but this might be the second round?
+  //   debug << "enum error [" << uid << "] " << "[" << parameterOffset << "]\r\n";
+  // }
   debug << "enumerated [" << uid << "][" << nuid << "][" << peers << "][" << parameterOffset << "]\r\n";
 }
 
@@ -122,26 +125,26 @@ void DigitalBusHandler::sendIdent(uint8_t id, uint8_t version, uint8_t device, u
   sendMessage(OWL_COMMAND_IDENT|uid, uuid[2], uuid[1], uuid[0]);
 }
 
-/* void handleIdent(uint8_t id, uint8_t version, uint8_t device, uint8_t* uuid){ */
-/*   if(id != uid && id != nuid) */
-/*     sendIdent(id, version, device, uuid); // pass it on */
-/* } */
-
 void DigitalBusHandler::handleIdent(uint8_t id, uint8_t d1, uint8_t d2, uint8_t d3){
-  // todo: need to wait for full set of 6 messages and buffer UUID?
-  // no because uid is contained in every message
+  status = IDENTIFYING;
   debug << "rx ident [" << id << "][" << d1 << "][" << d2 << "][" << d3 << "]\r\n";
   // propagation done by DigitalBusReader
 }
 
 void DigitalBusHandler::sendParameterChange(uint8_t pid, int16_t value){
-  debug << "tx param [" << pid << "][" << value << "]\r\n";
   sendMessage(OWL_COMMAND_PARAMETER|uid, pid, value>>8, value);
 }
 
 void DigitalBusHandler::handleParameterChange(uint8_t pid, int16_t value){
-  debug << "rx param [" << pid << "][" << value << "]\r\n";
+  status = CONNECTED;
   bus_rx_parameter(pid, value);
-  // todo
-  // setParameter(pid, value);  
+}
+
+void DigitalBusHandler::sendButtonChange(uint8_t bid, int16_t value){
+  sendMessage(OWL_COMMAND_BUTTON|uid, bid, value>>8, value);
+}
+
+void DigitalBusHandler::handleButtonChange(uint8_t bid, int16_t value){
+  status = CONNECTED;
+  bus_rx_button(bid, value);
 }

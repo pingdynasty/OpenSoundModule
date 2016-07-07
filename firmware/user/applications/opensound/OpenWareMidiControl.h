@@ -1,5 +1,5 @@
-#ifndef OPENWAREMIDICONTROL_H_
-#define OPENWAREMIDICONTROL_H_
+#ifndef OPENWAREMIDICONTROL_H_INCLUDED
+#define OPENWAREMIDICONTROL_H_INCLUDED
 
 #define MIDI_SYSEX_MANUFACTURER        0x7d     /* Educational or development use only */
 #define MIDI_SYSEX_DEVICE              0x52     /* OWL Open Ware Laboratory */
@@ -125,4 +125,4 @@ enum OpenWareMidiControl {
   PATCH_PARAMETER_BH     = 90
 };
 
-#endif  // OPENWAREMIDICONTROL_H_
+#endif  // OPENWAREMIDICONTROL_H_INCLUDED

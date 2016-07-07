@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "message.h"
 
 #define SERIAL_DEBUG
 #define SERIAL_CONSOLE
@@ -36,6 +37,11 @@
 #define GREEN_LED_PIN        D4
 #define YELLOW_LED_PIN       D5
 
+#ifdef SERVICE_BUS
+#include "bus.h"
+#include "serial.h"
+#endif
+
 #ifdef  __cplusplus
 
 #include "application.h"
@@ -45,10 +51,6 @@ static const char* PARAMETER_NAMES[16] = {
   "/ba", "/bb", "/bc", "/bd", "/be", "/bf", "/bg", "/bh" 
 };
 
-template<class T>
-inline Print &operator <<(Print &obj, T arg)
-{ obj.print(arg); return obj; }
-
 enum LedPin {
   LED_NONE,
   LED_GREEN,
@@ -57,24 +59,6 @@ enum LedPin {
 
 void setLed(LedPin led);
 void printInfo(Print& out);
-
-class Debug : public Print {
-  size_t write(uint8_t data){
-#ifdef SERIAL_DEBUG
-    return Serial.write(data);
-#else
-    return 1;
-#endif
-  }
-  size_t write(const uint8_t* data, size_t size){
-#ifdef SERIAL_DEBUG
-    return Serial.write(data, size);
-#else
-    return size;
-#endif
-  }
-};
-extern Debug debug;
 
 #endif
 
@@ -100,14 +84,6 @@ extern "C" {
   void broadcastStatus();
   void debugMessage(const char* msg);
   void assert_failed(const char* msg, const char* location, int line);
-#ifdef SERVICE_BUS
-  /* outgoing: send message over digital bus */
-  void bus_tx_parameter(uint8_t pid, int16_t value);
-  /* incoming: callback when message received on digital bus */
-  void bus_rx_parameter(uint8_t pid, int16_t value);
-  void bus_tx_error(const char* reason);
-  void bus_rx_error(const char* reason);
-#endif
 #ifdef  __cplusplus
 }
 #endif

@@ -1,5 +1,6 @@
 #include "OscServer.h"
 #include "opensound.h"
+#include "OpenWareMidiControl.h"
 #include "ApplicationSettings.h"
 
 OscServer::OscServer() : commandCount(0) {

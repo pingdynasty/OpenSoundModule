@@ -1,5 +1,6 @@
 #include "DigitalBusReader.h"
-#include "opensound.h"
+#include "message.h"
+#include "bus.h"
 
 // read a 4-byte data frame
 void DigitalBusReader::readBusFrame(uint8_t* frame){
@@ -38,6 +39,19 @@ void DigitalBusReader::readBusFrame(uint8_t* frame){
       if(id != nuid) // propagate
 	sendFrame(frame);
     }
+    break;
+  case OWL_COMMAND_BUTTON:
+    if(nuid == NO_UID)
+      return bus_rx_error("Out of sequence message");
+    if(id != uid){
+      handleButtonChange(frame[1], (frame[2]<<8) | frame[3]);
+      if(id != nuid) // propagate
+	sendFrame(frame);
+    }
+    break;
+  case OWL_COMMAND_CFG:
+    if(nuid == NO_UID)
+      return bus_rx_error("Out of sequence message");
     break;
   case OWL_COMMAND_DATA:
     if(nuid == NO_UID)

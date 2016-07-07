@@ -332,7 +332,7 @@ void setup(){
   //  dacTimer.begin(dacCallback, 400, hmSec);
   // dacTimer.start();
 #ifdef SERVICE_BUS
-  Serial1.begin(DIGITAL_BUS_BAUD);
+  bus_setup();
   debugMessage("begin digital bus");
 #endif
   debugMessage("setup complete");
@@ -425,9 +425,9 @@ void process(){
   //  websocketserver.loop();
   //  tcpsocketserver.loop();
   oscserver.loop();
-// #ifdef SERVICE_BUS
-//   bus.connected();
-// #endif
+#ifdef SERVICE_BUS
+  bus_status();
+#endif
 }
 
 void reload(){
@@ -465,6 +465,27 @@ void setDeviceName(const char* name){
 }
 
 #ifdef SERVICE_BUS
+
+void bus_setup(){
+  serial_setup(DIGITAL_BUS_BAUD);
+}
+
+#define BUS_IDLE_INTERVAL 2700
+int bus_status(){
+  static uint32_t lastpolled = 0;
+  if(millis() > lastpolled + BUS_IDLE_INTERVAL){
+    bus.connected();
+    lastpolled = millis();
+  }
+  return bus.getStatus();
+}
+
+uint8_t* bus_deviceid(){
+  static uint8_t UUID[12];
+  Particle.deviceID().getBytes(UUID, sizeof(UUID)); // returns string pointer
+  return UUID;
+}
+
 /* outgoing: send message over digital bus */
 void bus_tx_parameter(uint8_t pid, int16_t value){
   debug << "tx parameter [" << pid << "][" << value << "]\r\n" ;
@@ -478,6 +499,10 @@ void bus_rx_parameter(uint8_t pid, int16_t value){
   oscsender.sendFloat((OscSender::OscMessageId)pid, value/4096.0f);
 }
 
+void bus_rx_button(uint8_t bid, int16_t value){
+  debug << "rx button [" << bid << "][" << value << "]\r\n" ;
+}
+
 void bus_tx_error(const char* reason){
   debug << "Digital bus send error: " << reason << ".\r\n";
 }
@@ -489,6 +514,6 @@ void bus_rx_error(const char* reason){
     Serial1.read();
 }
 
-#endif
+#endif /* SERVICE_BUS */
 
 #include "console.h"
