@@ -3,13 +3,14 @@
 #include "message.h"
 #include "serial.h"
 #include "bus.h"
+#include <string.h>
 
 DigitalBusHandler::DigitalBusHandler() 
   : uid(NO_UID), nuid(NO_UID), token(NO_TOKEN), peers(0), parameterOffset(0) {
   UUID = (uint8_t*)bus_deviceid();
 }
 
-void DigitalBusHandler::sendMessage(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4){
+void DigitalBusHandler::sendFrame(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4){
   uint8_t buf[4] = {d1, d2, d3, d4};
   sendFrame(buf);
 }
@@ -34,15 +35,15 @@ void DigitalBusHandler::startDiscover(){
   debug << "startDiscover [" << uid << "][" << (int)token << "]\r\n";
   if(token == NO_TOKEN)
     token = generateToken();
-  peers = 0;
-  uid = 0; // start by assuming we will be UID 0
-  nuid = NO_UID;
-  sendDiscover(0, token);
+  if(peers == 0){
+    uid = 0; // start by assuming we will be UID 0
+    sendDiscover(0, token);
+  }
 }
 
 void DigitalBusHandler::sendDiscover(uint8_t seq, uint32_t token){
   debug << "tx disco [" << seq << "][" << (int)token << "]\r\n";
-  sendMessage(OWL_COMMAND_DISCOVER|seq, token>>16, token>>8, token);
+  sendFrame(OWL_COMMAND_DISCOVER|seq, token>>16, token>>8, token);
 }
 
 void DigitalBusHandler::handleDiscover(uint8_t seq, uint32_t other){
@@ -80,7 +81,7 @@ void DigitalBusHandler::startEnum(){
 
 void DigitalBusHandler::sendEnum(uint8_t id, uint8_t version, uint8_t product, uint8_t params){
   debug << "tx enum [" << id << "][" << version << "][" << product << "][" << params << "]\r\n";
-  sendMessage(OWL_COMMAND_ENUM|id, version, product, params);
+  sendFrame(OWL_COMMAND_ENUM|id, version, product, params);
 }
 
 void DigitalBusHandler::handleEnum(uint8_t id, uint8_t version, uint8_t product, uint8_t params){
@@ -117,34 +118,98 @@ void DigitalBusHandler::startIdent(){
 
 void DigitalBusHandler::sendIdent(uint8_t id, uint8_t version, uint8_t device, uint8_t* uuid){
   debug << "tx ident [" << id  << "][" << version << "][" << device << "]\r\n";
-  sendMessage(OWL_COMMAND_IDENT|uid, VERSION, PRODUCT, uuid[15]);
-  sendMessage(OWL_COMMAND_IDENT|uid, uuid[14], uuid[13], uuid[12]);
-  sendMessage(OWL_COMMAND_IDENT|uid, uuid[11], uuid[10], uuid[9]);
-  sendMessage(OWL_COMMAND_IDENT|uid, uuid[8], uuid[7], uuid[6]);
-  sendMessage(OWL_COMMAND_IDENT|uid, uuid[5], uuid[4], uuid[3]);
-  sendMessage(OWL_COMMAND_IDENT|uid, uuid[2], uuid[1], uuid[0]);
+  sendFrame(OWL_COMMAND_IDENT|uid, VERSION, PRODUCT, uuid[15]);
+  sendFrame(OWL_COMMAND_IDENT|uid, uuid[14], uuid[13], uuid[12]);
+  sendFrame(OWL_COMMAND_IDENT|uid, uuid[11], uuid[10], uuid[9]);
+  sendFrame(OWL_COMMAND_IDENT|uid, uuid[8], uuid[7], uuid[6]);
+  sendFrame(OWL_COMMAND_IDENT|uid, uuid[5], uuid[4], uuid[3]);
+  sendFrame(OWL_COMMAND_IDENT|uid, uuid[2], uuid[1], uuid[0]);
 }
+
+/* void handleIdent(uint8_t id, uint8_t version, uint8_t device, uint8_t* uuid){ */
+/*   if(id != uid && id != nuid) */
+/*     sendIdent(id, version, device, uuid); // pass it on */
+/* } */
 
 void DigitalBusHandler::handleIdent(uint8_t id, uint8_t d1, uint8_t d2, uint8_t d3){
   status = IDENTIFYING;
+  // todo: need to wait for full set of 6 messages and buffer UUID?
+  // no because uid is contained in every message
   debug << "rx ident [" << id << "][" << d1 << "][" << d2 << "][" << d3 << "]\r\n";
   // propagation done by DigitalBusReader
 }
 
 void DigitalBusHandler::sendParameterChange(uint8_t pid, int16_t value){
-  sendMessage(OWL_COMMAND_PARAMETER|uid, pid, value>>8, value);
+  debug << "tx param [" << pid << "][" << value << "]\r\n";
+  sendFrame(OWL_COMMAND_PARAMETER|uid, pid, value>>8, value);
 }
 
 void DigitalBusHandler::handleParameterChange(uint8_t pid, int16_t value){
   status = CONNECTED;
+  debug << "rx param [" << pid << "][" << value << "]\r\n";
   bus_rx_parameter(pid, value);
+  // todo
+  // setParameter(pid, value);  
 }
 
 void DigitalBusHandler::sendButtonChange(uint8_t bid, int16_t value){
-  sendMessage(OWL_COMMAND_BUTTON|uid, bid, value>>8, value);
+  debug << "tx button [" << bid << "][" << value << "]\r\n";
+  sendFrame(OWL_COMMAND_BUTTON|uid, bid, value>>8, value);
 }
 
 void DigitalBusHandler::handleButtonChange(uint8_t bid, int16_t value){
   status = CONNECTED;
+  debug << "rx button [" << bid << "][" << value << "]\r\n";
   bus_rx_button(bid, value);
+}
+
+void DigitalBusHandler::sendCommand(uint8_t cmd, int16_t data){
+  debug << "tx cmd [" << cmd << "][" << data << "]\r\n";
+  sendFrame(OWL_COMMAND_COMMAND|uid, cmd, data>>8, data);
+}
+
+void DigitalBusHandler::handleCommand(uint8_t cmd, int16_t data){
+  status = CONNECTED;
+  debug << "rx cmd [" << cmd << "][" << data << "]\r\n";
+  bus_rx_command(cmd, data);
+}
+
+void DigitalBusHandler::sendMessage(const char* msg){
+  debug << "tx msg [" << msg << "]\r\n";
+  uint16_t len = strnlen(msg, sizeof(buffer));
+  uint16_t cnt = len/3;
+  while(cnt--){
+    sendFrame(OWL_COMMAND_MESSAGE|uid, msg[0], msg[1], msg[2]);
+    msg += 3;
+  }
+  switch(len%3){
+  case 0:
+    if(*(msg-1) != '\0')
+      sendFrame(OWL_COMMAND_MESSAGE|uid, '\0', '\0', '\0');
+    break;
+  case 1:
+    sendFrame(OWL_COMMAND_MESSAGE|uid, msg[0], '\0', '\0');
+    break;
+  case 2:
+    sendFrame(OWL_COMMAND_MESSAGE|uid, msg[0], msg[1], '\0');
+    break;
+  }
+}
+
+/* Received 3 bytes of string message */
+void DigitalBusHandler::handleMessage(const char* str){
+  status = CONNECTED;
+  debug << "rx msg [" << str << "]\r\n";
+  bus_rx_message(str);
+}
+
+void DigitalBusHandler::sendData(uint8_t* data, uint16_t len){
+  status = CONNECTED;
+  debug << "tx data [" << data[0] << "]\r\n";
+}
+
+void DigitalBusHandler::handleData(uint8_t* data, uint16_t len){
+  status = CONNECTED;
+  debug << "rx data [" << data[0] << "]\r\n";
+  bus_rx_data(data, len);
 }

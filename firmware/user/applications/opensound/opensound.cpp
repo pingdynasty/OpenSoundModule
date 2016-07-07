@@ -499,8 +499,21 @@ void bus_rx_parameter(uint8_t pid, int16_t value){
   oscsender.sendFloat((OscSender::OscMessageId)pid, value/4096.0f);
 }
 
+
+void bus_rx_command(uint8_t cmd, int16_t data){
+  debug << "rx command [" << cmd << "]\r\n" ;
+}
+
 void bus_rx_button(uint8_t bid, int16_t value){
   debug << "rx button [" << bid << "][" << value << "]\r\n" ;
+}
+
+void bus_rx_message(const char* msg){
+  debug << "rx msg [" << msg << "]\r\n" ;
+}
+
+void bus_rx_data(uint8_t* data, int16_t size){
+  debug << "rx data [" << size << "]\r\n" ;
 }
 
 void bus_tx_error(const char* reason){

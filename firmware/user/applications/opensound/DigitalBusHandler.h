@@ -49,9 +49,15 @@ public:
   void handleParameterChange(uint8_t pid, int16_t value);
   void sendButtonChange(uint8_t pid, int16_t value);
   void handleButtonChange(uint8_t pid, int16_t value);
+  void sendCommand(uint8_t cmd, int16_t data);
+  void handleCommand(uint8_t cmd, int16_t data);
+  void sendMessage(const char* msg);
+  void handleMessage(const char* msg);
+  void sendData(uint8_t* data, uint16_t len);
+  void handleData(uint8_t* data, uint16_t len);
 protected:
   // send a 4-byte message
-  void sendMessage(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4);
+  void sendFrame(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4);
   void sendFrame(uint8_t* frame);
 };
 

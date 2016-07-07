@@ -1,6 +1,11 @@
 #include "DigitalBusReader.h"
 #include "message.h"
 #include "bus.h"
+#include <string.h>
+
+void DigitalBusReader::appendFrame(uint8_t* frame){
+
+}
 
 // read a 4-byte data frame
 void DigitalBusReader::readBusFrame(uint8_t* frame){
@@ -49,13 +54,45 @@ void DigitalBusReader::readBusFrame(uint8_t* frame){
 	sendFrame(frame);
     }
     break;
-  case OWL_COMMAND_CFG:
+  case OWL_COMMAND_COMMAND:
     if(nuid == NO_UID)
       return bus_rx_error("Out of sequence message");
+    if(id != uid){
+      handleCommand(frame[1], (frame[2]<<8) | frame[3]);
+      if(id != nuid) // propagate
+	sendFrame(frame);
+    }
+    break;
+  case OWL_COMMAND_MESSAGE:
+    if(nuid == NO_UID)
+      return bus_rx_error("Out of sequence message");
+    if(id != uid){
+      // if(appendFrame(frame));
+      if(txuid == NO_UID)
+	txuid = id;
+      if(txuid == id){
+	// ignore if we are not exclusively listening to long messages from this uid
+	if(pos+3 < sizeof(buffer)){
+	  strncpy((char*)buffer+pos, (char*)frame+1, 3);
+	  pos += 3;
+	}else{
+	  // buffer overflow
+	  pos = 0;
+	}
+	if(frame[3] == '\0'){
+	  pos = 0;
+	  txuid = NO_UID;
+	  handleMessage((const char*)buffer);
+	}
+      }
+      if(id != nuid) // propagate
+	sendFrame(frame);
+    }
     break;
   case OWL_COMMAND_DATA:
     if(nuid == NO_UID)
       return bus_rx_error("Out of sequence message");
+    // todo: read size, use buffer to store
     // OSC, firmware or file data
     // 0x30, type, sizeH, sizeL
     // uint16_t size = (frame[2]<<8) | frame[3]);
