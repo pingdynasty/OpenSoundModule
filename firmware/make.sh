@@ -6,8 +6,8 @@ export MODULAR=n
 # export DEBUG_BUILD=y
 export PLATFORM=photon
 export SPARK_CLOUD=n
-export GCC_PREFIX=~/devel/OwlWare/Tools/gcc-arm-none-eabi-5_3-2016q1/bin/arm-none-eabi-
-export GCC_PREFIX=~/devel/OwlWare/Tools/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
+# export GCC_PREFIX=~/devel/OwlWare.sysex/Tools/gcc-arm-none-eabi-4_9-2015q2/bin/arm-none-eabi- 
+export GCC_PREFIX=arm-none-eabi- 
 export APP=opensound
 make $*
 
