@@ -201,14 +201,14 @@ int32_t process_address(const char* u, wiced_http_response_stream_t* s, void* ar
   }
   Streamer stream(s);
   stream << OSM_BEGIN << "<h1>Address Mapping</h1><form action='/address' method='GET'>";
-  stream << "<h2>Receive</h2>"
+  stream << "<h2>Outputs</h2><p>Messages received by the module</p>"
 	 << "<p>Prefix</p><input type='text' name='ip' value='" << settings.inputPrefix << "'><br>"
 	 << "<p>Status</p><input type='text' name='0' value='" << settings.getInputAddress(0) << "'><br>"
 	 << "<p>CV A</p><input type='text' name='1' value='" << settings.getInputAddress(1) << "'><br>"
 	 << "<p>CV B</p><input type='text' name='2' value='" << settings.getInputAddress(2) << "'><br>"
 	 << "<p>Trigger A</p><input type='text' name='3' value='" << settings.getInputAddress(3) << "'><br>"
 	 << "<p>Trigger B</p><input type='text' name='4' value='" << settings.getInputAddress(4) << "'><br>";
-  stream << "<h2>Send</h2>"
+  stream << "<h2>Inputs</h2><p>Messages sent from the module</p>"
 	 << "<p>Prefix</p><input type='text' name='op' value='" << settings.outputPrefix << "'><br>"
 	 << "<p>Status</p><input type='text' name='5' value='" << settings.getOutputAddress(0) << "'><br>"
 	 << "<p>CV A</p><input type='text' name='6' value='" << settings.getOutputAddress(1) << "'><br>"
