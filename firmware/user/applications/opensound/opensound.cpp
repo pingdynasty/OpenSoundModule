@@ -9,8 +9,15 @@
 #include "dac.h"
 #include "ApplicationSettings.h"
 #include "ConnectionManager.h"
+
 #ifdef SERVICE_MDNS
 #include "mdns/MDNS.h"
+#endif
+
+#ifdef SERVICE_WEBSOCKETS
+#include "WebSocketServer.hpp"
+#define WEBSOCKET_SERVER_PORT 8008
+WebSocketServer websocketserver(WEBSOCKET_SERVER_PORT);
 #endif
 
 SYSTEM_MODE(MANUAL);
@@ -95,9 +102,6 @@ void toggleLed(){
   digitalWrite(GREEN_LED_PIN, !digitalRead(GREEN_LED_PIN));
 }
 
-// WebSocketServer websocketserver(WEBSOCKET_SERVER_PORT);
-// TcpSocketServer tcpsocketserver(TCP_SERVER_PORT);
-
 void setRemoteIpAddress(const char* address){
   String ip(address);
 #ifdef SERIAL_DEBUG
@@ -146,12 +150,14 @@ void startServers(){
     debugMessage("webserver success");
   else
     debugMessage("webserver fail");
+#ifdef SERVICE_OSC
   debugMessage("oscserver.begin");
   success = oscserver.begin(settings.localPort);
   if(success)
     debugMessage("oscserver success");
   else
     debugMessage("oscserver fail");
+#endif
 #ifdef SERVICE_MDNS
   debugMessage("mdns.begin");
   success = mdns.begin();
@@ -159,6 +165,9 @@ void startServers(){
     debugMessage("mdns success");
   else
     debugMessage("mdns fail");
+#endif
+#ifdef SERVICE_WEBSOCKETS
+  websocketserver.begin();
 #endif
 #ifdef SERIAL_DEBUG
   debugMessage("startServers done");
@@ -170,15 +179,18 @@ void stopServers(){
   debugMessage("stopServers");
   if(connection.getCurrentNetwork() == -1)
     return;
-  //  tcpsocketserver.stop();
-  //  websocketserver.stop();
   debugMessage("webserver.stop");
   webserver.stop();
+#ifdef SERVICE_OSC
   debugMessage("oscserver.stop");
   oscserver.stop();
+#endif
 #ifdef SERVICE_MDNS
   debugMessage("mdns.stop");
   mdns.stop();
+#endif
+#ifdef SERVICE_WEBSOCKETS
+  websocketserver.stop();
 #endif
   debugMessage("stopServers done");
 }
@@ -317,7 +329,7 @@ void setup(){
   debugMessage("setup complete");
 }
 
-void process();
+void processInputs();
 void processButton();
 #ifdef SERIAL_CONSOLE
 void processConsole(Stream& port);
@@ -329,7 +341,13 @@ void loop(){
 #ifdef SERVICE_MDNS
     mdns.processQueries();
 #endif
-    process();
+#ifdef SERVICE_WEBSOCKETS
+    websocketserver.loop();
+#endif
+    processInputs();
+#ifdef SERVICE_OSC
+    oscserver.loop();
+#endif
   }
 #ifdef SERIAL_CONSOLE
   processConsole(Serial);
@@ -364,7 +382,7 @@ void processButton(){
   }
 }
 
-void process(){
+void processInputs(){
   int cv = analogRead(ANALOG_PIN_A);
   if(abs(cv - cvA) > ANALOG_THRESHOLD){
     cvA = cv;
@@ -385,15 +403,14 @@ void process(){
     triggerB = btn;
     sendTriggerB(btn);
   }
-  //  websocketserver.loop();
-  //  tcpsocketserver.loop();
-  oscserver.loop();
 }
 
 void reload(){
+#ifdef SERVICE_OSC
   oscserver.stop();
   configureOsc();
   oscserver.begin(settings.localPort);
+#endif
 }
 
 void factoryReset(){

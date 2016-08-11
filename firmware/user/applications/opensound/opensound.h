@@ -6,7 +6,11 @@
 
 /* #define SERIAL_DEBUG */
 #define SERIAL_CONSOLE
+#define SERVICE_OSC
 #define SERVICE_MDNS
+#define SERVICE_WEBSOCKETS
+
+#define WEBSOCKET_BUFFER_SIZE       64
 
 #define OSC_ADDRESS_MAX_LEN         19
 #define OSC_MESSAGE_SIZE            (OSC_ADDRESS_MAX_LEN+1+4+4)
