@@ -1,4 +1,5 @@
 #include "application.h"
+#include "opensound.h"
 #include "OscSender.h"
 #include "OscServer.h"
 #include "ApplicationSettings.h"

@@ -66,9 +66,9 @@ static char* getUptoLinefeed(const char *startFrom)
 {
     char *writeTo = NULL;
     uint8_t newLength = strstr_P(startFrom, rn) - startFrom;
-    assert(newLength, "strstr failed");
+    ASSERT(newLength, "strstr failed");
     writeTo = (char *)malloc(newLength+1); //+1 for '\x00'
-    assert(writeTo, "malloc failed");
+    ASSERT(writeTo, "malloc failed");
     memcpy(writeTo, startFrom, newLength);
     writeTo[ newLength ] = 0;
 
@@ -100,7 +100,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
         hs->resource = NULL;
     }
     hs->resource = (char *)malloc(second - first + 1); // +1 is for \x00 symbol
-    assert(hs->resource, "malloc failed");
+    ASSERT(hs->resource, "malloc failed");
 
     if (sscanf_P(inputPtr, PSTR("GET %s HTTP/1.1\r\n"), hs->resource) != 1)
         return WS_ERROR_FRAME;
@@ -148,7 +148,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
             char *connectionValue = NULL;
             connectionValue = getUptoLinefeed(inputPtr);
             strtolower(connectionValue);
-            assert(connectionValue, "strtolower failed");
+            ASSERT(connectionValue, "strtolower failed");
             if (strstr_P(connectionValue, upgrade) != NULL)
                 connectionFlag = TRUE;
             free(connectionValue);
@@ -158,7 +158,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
             char *compare = NULL;
             compare = getUptoLinefeed(inputPtr);
             strtolower(compare);
-            assert(compare, "strtolower failed");
+            ASSERT(compare, "strtolower failed");
             if (memcmp_P(compare, websocket, strlen_P(websocket)) == 0)
                 upgradeFlag = TRUE;
             free(compare);
@@ -182,9 +182,9 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
 void wsGetHandshakeAnswer(const struct handshake *hs, uint8_t *outFrame, 
                           size_t *outLength)
 {
-    assert(outFrame && *outLength, "invalid args");
-    assert(hs->frameType == WS_OPENING_FRAME, "invalid frame type");
-    assert(hs && hs->key, "invalid args");
+    ASSERT(outFrame && *outLength, "invalid args");
+    ASSERT(hs->frameType == WS_OPENING_FRAME, "invalid frame type");
+    ASSERT(hs && hs->key, "invalid args");
 
     char *responseKey = NULL;
     uint8_t length = strlen(hs->key)+strlen_P(secret);
@@ -209,17 +209,17 @@ void wsGetHandshakeAnswer(const struct handshake *hs, uint8_t *outFrame,
     
     free(responseKey);
     // if assert fail, that means, that we corrupt memory
-    assert(written <= *outLength, "overrun, memory corrupted");
+    ASSERT(written <= *outLength, "overrun, memory corrupted");
     *outLength = written;
 }
 
 void wsMakeFrame(const uint8_t *data, size_t dataLength,
                  uint8_t *outFrame, size_t *outLength, enum wsFrameType frameType)
 {
-    assert(outFrame && *outLength, "invalid arguments");
-    assert(frameType < 0x10, "invalid arguments");
+    ASSERT(outFrame && *outLength, "invalid arguments");
+    ASSERT(frameType < 0x10, "invalid arguments");
     if (dataLength > 0)
-        assert(data, "invalid arguments");
+        ASSERT(data, "invalid arguments");
     
     outFrame[0] = 0x80 | frameType;
     
@@ -276,7 +276,7 @@ static size_t getPayloadLength(const uint8_t *inputFrame, size_t inputLength,
 enum wsFrameType wsParseInputFrame(uint8_t *inputFrame, size_t inputLength,
                                    uint8_t **dataPtr, size_t *dataLength)
 {
-    assert(inputFrame && inputLength, "invalid arguments");
+    ASSERT(inputFrame && inputLength, "invalid arguments");
 
     if (inputLength < 2)
         return WS_INCOMPLETE_FRAME;
@@ -306,7 +306,7 @@ enum wsFrameType wsParseInputFrame(uint8_t *inputFrame, size_t inputLength,
                 return WS_INCOMPLETE_FRAME;
             uint8_t *maskingKey = &inputFrame[2 + payloadFieldExtraBytes];
 
-            assert(payloadLength == inputLength-6-payloadFieldExtraBytes, "invalid payload length");
+            ASSERT(payloadLength == inputLength-6-payloadFieldExtraBytes, "invalid payload length");
 
             *dataPtr = &inputFrame[2 + payloadFieldExtraBytes + 4];
             *dataLength = payloadLength;

@@ -4,13 +4,14 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/* #define SERIAL_DEBUG */
+#define SERIAL_DEBUG
 #define SERIAL_CONSOLE
 #define SERVICE_OSC
 #define SERVICE_MDNS
 #define SERVICE_WEBSOCKETS
 
 #define WEBSOCKET_BUFFER_SIZE       64
+#define WEBSOCKET_SERVER_PORT       8008
 
 #define OSC_ADDRESS_MAX_LEN         19
 #define OSC_MESSAGE_SIZE            (OSC_ADDRESS_MAX_LEN+1+4+4)
@@ -96,6 +97,9 @@ extern "C" {
   void broadcastStatus();
   void debugMessage(const char* msg);
   void assert_failed(const char* msg, const char* location, int line);
+
+  void process_opensound(uint8_t* data, size_t size);
+
 #ifdef  __cplusplus
 }
 #endif

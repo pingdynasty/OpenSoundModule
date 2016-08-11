@@ -68,14 +68,14 @@ public:
       service = STATUS_SERVICE;
       return 0;
     }
-    if(strcmp(hs.resource, "/opensound") == 0){
+    if(strcmp(hs.resource, "/osc") == 0){
       service = OPENSOUND_SERVICE;
       return 0;
     }
-    if(strcmp(hs.resource, "/osc") == 0){
-      service = OSC_SERVICE;
-      return 0;
-    }
+    // if(strcmp(hs.resource, "/osc") == 0){
+    //   service = OSC_SERVICE;
+    //   return 0;
+    // }
     service = NO_SERVICE;
     frameSize = sprintf((char *)buffer, PSTR("HTTP/1.1 404 Not Found\r\n\r\n"));
     send_websocket_data( buffer, frameSize );
@@ -127,7 +127,7 @@ public:
   void processEcho(uint8_t* data, size_t dataSize){
     uint8_t *receivedString = NULL;
     receivedString = (uint8_t *)malloc(dataSize+1);
-    assert(receivedString, "malloc failed");
+    ASSERT(receivedString, "malloc failed");
     memcpy(receivedString, data, dataSize);
     receivedString[ dataSize ] = 0;
     sendTextFrame(receivedString, dataSize);
@@ -170,10 +170,10 @@ public:
   int process(){
     uint8_t* data = NULL;
     size_t dataSize = 0;
-    // assert(frameType == WS_INCOMPLETE_FRAME, "weird frame")
+    // ASSERT(frameType == WS_INCOMPLETE_FRAME, "weird frame")
     // if(frameType == WS_INCOMPLETE_FRAME) {
       readLength = recv_websocket_data(buffer, WEBSOCKET_BUFFER_SIZE);
-      assert(readLength <= WEBSOCKET_BUFFER_SIZE, "recv overflow");
+      ASSERT(readLength <= WEBSOCKET_BUFFER_SIZE, "recv overflow");
       if(readLength <= 0)
 	return 0;
 
@@ -210,7 +210,7 @@ public:
       }
 
       if(state == WS_STATE_OPENING) {
-	assert(frameType == WS_OPENING_FRAME, "invalid frame type");
+	ASSERT(frameType == WS_OPENING_FRAME, "invalid frame type");
 	if (frameType == WS_OPENING_FRAME) {
 	  // if resource is right, generate answer handshake and send it
 	  if(processHandshake(hs) != 0){

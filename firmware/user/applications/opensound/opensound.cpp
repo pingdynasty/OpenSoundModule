@@ -16,7 +16,6 @@
 
 #ifdef SERVICE_WEBSOCKETS
 #include "WebSocketServer.hpp"
-#define WEBSOCKET_SERVER_PORT 8008
 WebSocketServer websocketserver(WEBSOCKET_SERVER_PORT);
 #endif
 
@@ -439,6 +438,14 @@ const char* getDeviceName(){
 
 void setDeviceName(const char* name){
   connection.setAccessPointPrefix(name);
+}
+
+void process_opensound(uint8_t* data, size_t size){
+#if defined SERIAL_DEBUG
+  Serial.print(size);
+  Serial.println(" bytes: process data");
+  oscserver.udp_recv_packet(data, size);
+#endif
 }
 
 #include "console.h"
