@@ -93,18 +93,30 @@ void oscTriggerB(OscServer& server, OscMessage& msg){
 
 void sendCvA(uint16_t value){
   oscsender.send(OscSender::CV_A, scaleOutputValue(CV_A_OUT, value));
+#ifdef SERVICE_WEBSOCKETS
+  oscsender.sendTo(OscSender::CV_A, websocketserver);
+#endif
 }
 
 void sendCvB(uint16_t value){
   oscsender.send(OscSender::CV_B, scaleOutputValue(CV_B_OUT, value));
+#ifdef SERVICE_WEBSOCKETS
+  oscsender.sendTo(OscSender::CV_B, websocketserver);
+#endif
 }
 
 void sendTriggerA(bool value){
   oscsender.send(OscSender::TRIGGER_A, (int)value);
+#ifdef SERVICE_WEBSOCKETS
+  oscsender.sendTo(OscSender::TRIGGER_A, websocketserver);
+#endif
 }
 
 void sendTriggerB(bool value){
   oscsender.send(OscSender::TRIGGER_B, (int)value);
+#ifdef SERVICE_WEBSOCKETS
+  oscsender.sendTo(OscSender::TRIGGER_B, websocketserver);
+#endif
 }
 
 void configureOsc(){

@@ -48,3 +48,10 @@ void OscSender::send(OscMessageId mid, const char* value){
     oscserver.endPacket();
   }
 }
+
+#ifdef SERVICE_WEBSOCKETS
+void OscSender::sendTo(OscMessageId mid, WebSocketServer& ws){
+  if(mid < OSC_MESSAGE_COUNT)
+    ws.sendOscData(messages[mid].getBuffer(), messages[mid].calculateMessageLength());
+}
+#endif

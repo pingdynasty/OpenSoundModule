@@ -3,6 +3,9 @@
 
 #include "opensound.h"
 #include "OscMessage.hpp"
+#ifdef SERVICE_WEBSOCKETS
+#include "WebSocketServer.hpp"
+#endif
 
 class OscSender {
 public:
@@ -32,6 +35,9 @@ public:
   void send(OscMessageId mid, int value);
   void send(OscMessageId mid, float value);
   void send(OscMessageId mid, const char* value);
+#ifdef SERVICE_WEBSOCKETS
+  void sendTo(OscMessageId mid, WebSocketServer& ws);
+#endif
 };
 
 #endif /* __OscSender_h__ */

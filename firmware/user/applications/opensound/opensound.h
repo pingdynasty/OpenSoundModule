@@ -98,7 +98,7 @@ extern "C" {
   void debugMessage(const char* msg);
   void assert_failed(const char* msg, const char* location, int line);
 
-  void process_opensound(uint8_t* data, size_t size);
+  void process_osc(uint8_t* data, size_t size);
 
 #ifdef  __cplusplus
 }

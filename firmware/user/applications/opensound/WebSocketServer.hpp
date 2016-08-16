@@ -1,3 +1,6 @@
+#ifndef WEBSOCKETSERVER_H_
+#define WEBSOCKETSERVER_H_
+
 #include "opensound.h"
 #include "websocket.h"
   
@@ -8,7 +11,6 @@ private:
     ECHO_SERVICE,
     STATUS_SERVICE,
     MIDI_SERVICE,
-    OPENSOUND_SERVICE,
     OSC_SERVICE
   };
   uint8_t buffer[WEBSOCKET_BUFFER_SIZE];
@@ -69,7 +71,7 @@ public:
       return 0;
     }
     if(strcmp(hs.resource, "/osc") == 0){
-      service = OPENSOUND_SERVICE;
+      service = OSC_SERVICE;
       return 0;
     }
     // if(strcmp(hs.resource, "/osc") == 0){
@@ -82,8 +84,8 @@ public:
     return -1;
   }
 
-  void sendOpenSoundData(uint8_t* data, size_t dataSize){
-    if(service == OPENSOUND_SERVICE){
+  void sendOscData(uint8_t* data, size_t dataSize){
+    if(service == OSC_SERVICE){
       // uint8_t output[16];
       // base64_encode(data, dataSize, output, sizeof(output), BASE64_STANDARD);
       sendBinaryFrame(data, dataSize);
@@ -91,8 +93,8 @@ public:
     }
   }
 
-  void processOpenSound(uint8_t* data, size_t dataSize){
-    process_opensound(data, dataSize);
+  void processOscData(uint8_t* data, size_t dataSize){
+    process_osc(data, dataSize);
   }
 
   void processTextFrame(uint8_t* data, size_t dataSize){
@@ -110,8 +112,8 @@ public:
 
   void processBinaryFrame(uint8_t* data, size_t dataSize){
     switch(service){
-    case OPENSOUND_SERVICE:
-      processOpenSound(data, dataSize);
+    case OSC_SERVICE:
+      processOscData(data, dataSize);
       break;
     default:
       break;
@@ -246,3 +248,4 @@ public:
     return 0;
   }
 };
+#endif /* WEBSOCKETSERVER_H_ */

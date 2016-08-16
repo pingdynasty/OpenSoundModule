@@ -41,7 +41,7 @@ public:
 	Serial.println(remoteIPAddress);
 #endif
       }
-      udp_recv_packet(_rxbuffer, len);
+      osc_recv_packet(_rxbuffer, len);
       _rxoffset += len;
       //      len = min(len, UDP_RX_BUFFER_SIZE);
       //      len = read(_rxbuffer, len);
@@ -90,7 +90,7 @@ public:
     }
   }
 
-  void udp_recv_packet(uint8_t* buffer, int size){
+  void osc_recv_packet(uint8_t* buffer, int size){
     if(size >= 28 && strncmp((const char*)buffer, "#bundle", 7) == 0){
       int len = OscMessage::getOscInt32(buffer+16);
       buffer += 16; // discard #bundle and timestamp

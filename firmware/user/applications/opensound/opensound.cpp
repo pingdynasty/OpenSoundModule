@@ -1,7 +1,6 @@
 // #include <assert.h> causes undefined symbols in nanolib
 #include "application.h"
 #include "opensound.h"
-#include "osc.hpp"
 #include "web.hpp"
 #include <stdint.h>
 // #include "TcpSocketServer.hpp"
@@ -13,11 +12,12 @@
 #ifdef SERVICE_MDNS
 #include "mdns/MDNS.h"
 #endif
-
 #ifdef SERVICE_WEBSOCKETS
 #include "WebSocketServer.hpp"
 WebSocketServer websocketserver(WEBSOCKET_SERVER_PORT);
 #endif
+
+#include "osc.hpp"
 
 SYSTEM_MODE(MANUAL);
 // #define RX_BUFFER_LENGTH 64
@@ -440,12 +440,12 @@ void setDeviceName(const char* name){
   connection.setAccessPointPrefix(name);
 }
 
-void process_opensound(uint8_t* data, size_t size){
+void process_osc(uint8_t* data, size_t size){
 #if defined SERIAL_DEBUG
   Serial.print(size);
   Serial.println(" bytes: process data");
-  oscserver.udp_recv_packet(data, size);
 #endif
+  oscserver.osc_recv_packet(data, size);
 }
 
 #include "console.h"
