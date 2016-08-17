@@ -79,6 +79,10 @@ void printInfo(Print& out){
   out.println(System.freeMemory());
 }
 
+void printVersion(Print& out){
+  out.println("Open Sound Module Firmware " FIRMWARE_VERSION);
+}
+
 void setLed(LedPin led){
   switch(led){
   case LED_YELLOW:

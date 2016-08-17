@@ -97,6 +97,10 @@ void processConsole(Stream& port){
       port.println("i: print device info");
       printInfo(port);
       break;
+    case 'v':
+      port.println("v: print version info");
+      printVersion(port);
+      break;
     case 'l': {
       port.println("l: print local IP address");
       port.println(connection.getLocalIPAddress());
