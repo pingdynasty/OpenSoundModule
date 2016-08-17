@@ -74,10 +74,6 @@ public:
       service = OSC_SERVICE;
       return 0;
     }
-    // if(strcmp(hs.resource, "/osc") == 0){
-    //   service = OSC_SERVICE;
-    //   return 0;
-    // }
     service = NO_SERVICE;
     frameSize = sprintf((char *)buffer, PSTR("HTTP/1.1 404 Not Found\r\n\r\n"));
     send_websocket_data( buffer, frameSize );
