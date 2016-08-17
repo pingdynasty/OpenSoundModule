@@ -10,7 +10,7 @@
 #define SERVICE_MDNS
 #define SERVICE_WEBSOCKETS
 
-#define WEBSOCKET_BUFFER_SIZE       64
+#define WEBSOCKET_BUFFER_SIZE       256
 #define WEBSOCKET_SERVER_PORT       8008
 
 #define OSC_ADDRESS_MAX_LEN         19
@@ -54,6 +54,7 @@ enum LedPin {
 
 void setLed(LedPin led);
 void printInfo(Print& out);
+void printVersion(Print& out);
 
 class Debug : public Print {
   size_t write(uint8_t data){
