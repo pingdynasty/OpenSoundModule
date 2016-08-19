@@ -20,6 +20,10 @@
 #ifndef CS_MONGOOSE_SRC_COMMON_H_
 #define CS_MONGOOSE_SRC_COMMON_H_
 
+#define MG_DISABLE_FILESYSTEM
+#define MG_DISABLE_STDIO
+#define MG_NO_BSD_SOCKETS
+
 #define MG_VERSION "6.5"
 
 /* Local tweaks, applied before any of Mongoose's own headers. */
@@ -352,7 +356,7 @@ typedef struct stat cs_stat_t;
 #define CS_COMMON_PLATFORMS_PLATFORM_ESP_LWIP_H_
 #if CS_PLATFORM == CS_P_ESP_LWIP
 
-#include <assert.h>
+/* #include <assert.h> */
 #include <ctype.h>
 /* #include <fcntl.h> */
 #include <inttypes.h>
@@ -363,7 +367,7 @@ typedef struct stat cs_stat_t;
 #include <lwip/err.h>
 #include <lwip/ip_addr.h>
 #include <lwip/inet.h>
-#include <lwip/netdb.h>
+/* #include <lwip/netdb.h> */
 #include <lwip/dns.h>
 
 #ifndef LWIP_PROVIDE_ERRNO

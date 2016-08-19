@@ -4,7 +4,7 @@
 #include "opensound.h"
 #include "OscMessage.hpp"
 #ifdef SERVICE_WEBSOCKETS
-#include "WebSocketServer.hpp"
+#include "WebSocketServer.h"
 #endif
 
 class OscSender {

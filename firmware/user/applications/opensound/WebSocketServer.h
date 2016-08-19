@@ -19,44 +19,23 @@ private:
   // enum wsState state;
   // enum wsFrameType frameType;
   // struct handshake hs;
-  // WebSocketService service;
+  WebSocketService service;
   // TCPClient client;
-
-
 public:
 WebSocketServer(const unsigned port);
  // { // : TCPServer(port) {
  //    mg_mgr_init(&mgr, NULL);
  //  }
 
-void begin();
-void stop();
+ void begin();
+ void stop();
 
-void loop();
-    // mg_mgr_poll(&mgr, 200);
-    // nc = mg_bind(&mgr, s_http_port, ev_handler);
-    // s_http_server_opts.document_root = ".";
-    // mg_set_protocol_http_websocket(nc);
-
-    // if(client.connected()){
-    //   if(process() != 0){
-    // 	blockWaiting(client, 200);
-    // 	// client.stop();
-    // 	client = available();
-    //   }
-    // }else if(!client.status()){
-    //   client = available();
-    //   if(client.status()){
-    // 	debugMessage("websocket connected");
-    // 	process();
-    //   }
-    // }
-  // }
+ void loop();
 
   void reset(){
     // memset(buffer, 0, WEBSOCKET_BUFFER_SIZE);
     // nullHandshake(&hs);
-    // service = NO_SERVICE;
+    service = NO_SERVICE;
     // readLength = 0;
     // frameSize = WEBSOCKET_BUFFER_SIZE;
     // state = WS_STATE_OPENING;
@@ -74,36 +53,34 @@ void loop();
   //   memset(buffer, 0, WEBSOCKET_BUFFER_SIZE);
   // }
 
-  // int processHandshake(struct handshake hs){
-  //   if(strcmp(hs.resource, "/echo") == 0){
-  //     service = ECHO_SERVICE;
-  //     return 0;
-  //   }
-  //   if(strcmp(hs.resource, "/status") == 0){
-  //     service = STATUS_SERVICE;
-  //     return 0;
-  //   }
-  //   if(strcmp(hs.resource, "/osc") == 0){
-  //     service = OSC_SERVICE;
-  //     return 0;
-  //   }
-  //   service = NO_SERVICE;
-  //   frameSize = sprintf((char *)buffer, PSTR("HTTP/1.1 404 Not Found\r\n\r\n"));
-  //   send_websocket_data( buffer, frameSize );
-  //   return -1;
-  // }
+  int processHandshake(const char* uri){
+    if(strcmp(uri, "/echo") == 0){
+      service = ECHO_SERVICE;
+      return 0;
+    }
+    if(strcmp(uri, "/status") == 0){
+      service = STATUS_SERVICE;
+      return 0;
+    }
+    if(strcmp(uri, "/osc") == 0){
+      service = OSC_SERVICE;
+      return 0;
+    }
+    service = NO_SERVICE;
+    return -1;
+  }
 
   void sendOscData(uint8_t* data, size_t dataSize){
-//     if(service == OSC_SERVICE){
-//       // uint8_t output[16];
-//       // base64_encode(data, dataSize, output, sizeof(output), BASE64_STANDARD);
-//       sendBinaryFrame(data, dataSize);
-// // todo: synchronise with semaphores or queue
-//     }
+    if(service == OSC_SERVICE){
+      // uint8_t output[16];
+      // base64_encode(data, dataSize, output, sizeof(output), BASE64_STANDARD);
+      sendBinaryFrame(data, dataSize);
+// todo: synchronise with semaphores or queue
+    }
   }
 
   void processOscData(uint8_t* data, size_t dataSize){
-    // process_osc(data, dataSize);
+    process_osc(data, dataSize);
   }
 
   void processTextFrame(uint8_t* data, size_t dataSize){
@@ -120,13 +97,13 @@ void loop();
   }    
 
   void processBinaryFrame(uint8_t* data, size_t dataSize){
-    // switch(service){
-    // case OSC_SERVICE:
-    //   processOscData(data, dataSize);
-    //   break;
-    // default:
-    //   break;
-    // }
+    switch(service){
+    case OSC_SERVICE:
+      processOscData(data, dataSize);
+      break;
+    default:
+      break;
+    }
   }    
 
   void processStatus(uint8_t* data, size_t dataSize){
@@ -136,47 +113,18 @@ void loop();
   }
 
   void processEcho(uint8_t* data, size_t dataSize){
-    // uint8_t *receivedString = NULL;
-    // receivedString = (uint8_t *)malloc(dataSize+1);
-    // ASSERT(receivedString, "malloc failed");
-    // memcpy(receivedString, data, dataSize);
-    // receivedString[ dataSize ] = 0;
-    // sendTextFrame(receivedString, dataSize);
-    // free(receivedString);
+    uint8_t *receivedString = NULL;
+    receivedString = (uint8_t *)malloc(dataSize+1);
+    ASSERT(receivedString, "malloc failed");
+    memcpy(receivedString, data, dataSize);
+    receivedString[ dataSize ] = 0;
+    sendTextFrame(receivedString, dataSize);
+    free(receivedString);
   }
 
-  void sendBinaryFrame(uint8_t* data, size_t dataSize){
-    // prepareBuffer();
-    // wsMakeFrame(data, dataSize, buffer, &frameSize, WS_BINARY_FRAME);
-    // send_websocket_data( buffer, frameSize );
-  }
+  void sendBinaryFrame(uint8_t* data, size_t dataSize);
 
-  void sendTextFrame(uint8_t* data, size_t dataSize){
-    // prepareBuffer();
-    // wsMakeFrame(data, dataSize, buffer, &frameSize, WS_TEXT_FRAME);
-    // send_websocket_data( buffer, frameSize );
-  }
-
-  int send_websocket_data(unsigned char * data, int length){
-    // return client.write(data, length);
-  }
-
-  int recv_websocket_data(unsigned char * data, int length){
-    // return client.read(data, length);
-  }
-
-  void blockWaiting(TCPClient& client, unsigned long timeOut){
-    // unsigned long startWait = millis();
-    // while(client.available() == 0) {
-    //   if(millis() - startWait > timeOut) 
-    //     return;
-    // }
-    // while(client.available() > 0){
-    //   client.read();  // discard read data
-    //   if(millis() - startWait > timeOut) 
-    //     return;
-    // }
-  }
+  void sendTextFrame(uint8_t* data, size_t dataSize);
 
   int process(){
     // uint8_t* data = NULL;

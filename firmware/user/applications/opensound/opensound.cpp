@@ -13,7 +13,7 @@
 #include "mdns/MDNS.h"
 #endif
 #ifdef SERVICE_WEBSOCKETS
-#include "WebSocketServer.hpp"
+#include "WebSocketServer.h"
 WebSocketServer websocketserver(WEBSOCKET_SERVER_PORT);
 #endif
 
