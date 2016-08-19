@@ -77,6 +77,8 @@
 #define CS_P_CC3200 4
 #define CS_P_MSP432 5
 
+#define CS_PLATFORM CS_P_ESP_LWIP
+
 /* If not specified explicitly, we guess platform by defines. */
 #ifndef CS_PLATFORM
 
@@ -352,11 +354,11 @@ typedef struct stat cs_stat_t;
 
 #include <assert.h>
 #include <ctype.h>
-#include <fcntl.h>
+/* #include <fcntl.h> */
 #include <inttypes.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/time.h>
+/* #include <sys/stat.h> */
+/* #include <sys/time.h> */
 
 #include <lwip/err.h>
 #include <lwip/ip_addr.h>
