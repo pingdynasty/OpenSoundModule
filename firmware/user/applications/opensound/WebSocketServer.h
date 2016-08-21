@@ -53,29 +53,13 @@ WebSocketServer(const unsigned port);
   //   memset(buffer, 0, WEBSOCKET_BUFFER_SIZE);
   // }
 
-  int processHandshake(const char* uri){
-    if(strcmp(uri, "/echo") == 0){
-      service = ECHO_SERVICE;
-      return 0;
-    }
-    if(strcmp(uri, "/status") == 0){
-      service = STATUS_SERVICE;
-      return 0;
-    }
-    if(strcmp(uri, "/osc") == 0){
-      service = OSC_SERVICE;
-      return 0;
-    }
-    service = NO_SERVICE;
-    return -1;
-  }
+  int processHandshake(const char* uri);
 
   void sendOscData(uint8_t* data, size_t dataSize){
     if(service == OSC_SERVICE){
       // uint8_t output[16];
       // base64_encode(data, dataSize, output, sizeof(output), BASE64_STANDARD);
       sendBinaryFrame(data, dataSize);
-// todo: synchronise with semaphores or queue
     }
   }
 

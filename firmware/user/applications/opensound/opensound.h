@@ -10,7 +10,6 @@
 #define SERVICE_MDNS
 #define SERVICE_WEBSOCKETS
 
-#define WEBSOCKET_BUFFER_SIZE       256
 #define WEBSOCKET_SERVER_PORT       8008
 
 #define OSC_ADDRESS_MAX_LEN         19
