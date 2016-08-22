@@ -15,6 +15,9 @@ void sendOscStatus(const char* status){
   oscsender.send(OscSender::STATUS, status);
   //  osc_status_msg.setString(0, status);
   //  oscserver.sendMessage(osc_status_msg);
+#ifdef SERVICE_WEBSOCKETS
+  oscsender.sendTo(OscSender::STATUS, websocketserver);
+#endif
 }
 
 void broadcastStatus(){

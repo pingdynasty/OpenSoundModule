@@ -170,6 +170,7 @@ void startServers(){
     debugMessage("mdns fail");
 #endif
 #ifdef SERVICE_WEBSOCKETS
+  debugMessage("websocketserver.begin");
   websocketserver.begin();
 #endif
 #ifdef SERIAL_DEBUG
@@ -193,6 +194,7 @@ void stopServers(){
   mdns.stop();
 #endif
 #ifdef SERVICE_WEBSOCKETS
+  debugMessage("websocketserver.stop");
   websocketserver.stop();
 #endif
   debugMessage("stopServers done");
