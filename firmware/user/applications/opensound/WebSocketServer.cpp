@@ -5,8 +5,6 @@ static struct mg_mgr mgr;
 static const char *s_http_port = "8008";
 // static struct mg_serve_http_opts s_http_server_opts;
 
-extern WebSocketServer websocketserver;
-
 extern "C"{
   int gettimeofday(struct timeval *t, void *tz){
     return 0;
@@ -18,12 +16,13 @@ static int is_websocket(const struct mg_connection *nc) {
 }
 
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
+  WebSocketServer* wss = (WebSocketServer*)nc->mgr->user_data;
   switch (ev) {
   case MG_EV_WEBSOCKET_HANDSHAKE_REQUEST: {
     /* - MG_EV_WEBSOCKET_HANDSHAKE_REQUEST: server has received the WebSocket
      *   handshake request. `ev_data` contains parsed HTTP request. */
     struct http_message* hm = (struct http_message*)ev_data;
-    if(websocketserver.processHandshake(hm->uri.p, hm->uri.len) != 0){
+    if(wss->processHandshake(hm->uri.p, hm->uri.len) != 0){
       static const char notfound[] = "HTTP/1.1 404 Not Found\r\n\r\n";
       mg_send_websocket_frame(nc, WEBSOCKET_OP_CLOSE, notfound, sizeof(notfound));
     }
@@ -45,9 +44,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 #endif
     /* New websocket message. */
     if(wm->flags & WEBSOCKET_OP_TEXT)
-      websocketserver.processTextFrame((char*)(wm->data), wm->size);
+      wss->processTextFrame((char*)(wm->data), wm->size);
     else if(wm->flags & WEBSOCKET_OP_BINARY)
-      websocketserver.processBinaryFrame(wm->data, wm->size);
+      wss->processBinaryFrame(wm->data, wm->size);
     break;
   }
   case MG_EV_CLOSE: {
@@ -87,7 +86,7 @@ void WebSocketServer::begin(){
 #ifdef SERIAL_DEBUG
   debugMessage("ws begin");
 #endif
-  mg_mgr_init(&mgr, NULL);
+  mg_mgr_init(&mgr, this);
   struct mg_connection *nc;
   nc = mg_bind(&mgr, s_http_port, ev_handler); // does this block?
   // s_http_server_opts.document_root = ".";
