@@ -41,10 +41,6 @@
 
 #include "application.h"
 
-template<class T>
-inline Print &operator <<(Print &obj, T arg)
-{ obj.print(arg); return obj; }
-
 enum LedPin {
   LED_NONE,
   LED_GREEN,
@@ -72,6 +68,10 @@ class Debug : public Print {
   }
 };
 extern Debug debug;
+
+template<class T>
+inline Print &operator <<(Print &obj, T arg)
+{ obj.print(arg); return obj; }
 
 #endif
 
